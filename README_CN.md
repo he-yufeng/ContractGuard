@@ -160,6 +160,9 @@ contractguard scan contract.pdf --output report.md
 # 输出结构化 JSON（方便脚本集成）
 contractguard scan contract.pdf --json
 
+# 直接保存结构化 JSON
+contractguard scan contract.pdf --json --output report.json
+
 # 直接传 API key（不用环境变量）
 contractguard scan contract.pdf --api-key sk-or-...
 ```

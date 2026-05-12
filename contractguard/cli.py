@@ -29,7 +29,7 @@ def main():
 @click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
 @click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
 @click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
-@click.option("--output", "-o", type=click.Path(), help="Save markdown report to file")
+@click.option("--output", "-o", type=click.Path(), help="Save report to file. Uses JSON when --json is set.")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
 def scan(file: str, model: str | None, api_key: str | None, base_url: str | None,
@@ -46,7 +46,7 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
     """
     from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
     from contractguard.parser import extract_text
-    from contractguard.report import generate_markdown_report, print_report
+    from contractguard.report import print_report
 
     model = model or DEFAULT_MODEL
 
@@ -80,10 +80,9 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
     else:
         print_report(result)
 
-    # Step 4: Save markdown report if requested
+    # Step 4: Save report if requested
     if output:
-        md_report = generate_markdown_report(result)
-        Path(output).write_text(md_report, encoding="utf-8")
+        _write_report(result, output, json_output=json_output)
         console.print(f"\n[green]\u2714[/green] Report saved to {output}")
 
 
@@ -96,3 +95,13 @@ def web():
         console.print("[red]Gradio not installed.[/red] Run: pip install contractguard[web]")
         return
     launch()
+
+
+def _write_report(result, output: str, json_output: bool = False) -> None:
+    from contractguard.report import generate_markdown_report
+
+    if json_output:
+        content = result.model_dump_json(indent=2) + "\n"
+    else:
+        content = generate_markdown_report(result)
+    Path(output).write_text(content, encoding="utf-8")

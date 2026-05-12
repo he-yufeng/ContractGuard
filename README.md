@@ -169,6 +169,9 @@ contractguard scan contract.pdf --output report.md
 # Get structured JSON output (for integrations or scripting)
 contractguard scan contract.pdf --json
 
+# Save structured JSON directly
+contractguard scan contract.pdf --json --output report.json
+
 # Pass API key directly (instead of env variable)
 contractguard scan contract.pdf --api-key sk-or-...
 ```
