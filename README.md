@@ -385,6 +385,10 @@ ContractGuard supports contracts up to ~30,000 tokens (~120,000 characters / ~60
 **Can I use it in CI/CD or automated pipelines?**
 Yes. Use `--json` to get structured output that can be parsed by other tools. Exit code is 0 on success, 1 on error. Example: `contractguard scan contract.pdf --json | jq '.red_flags | length'`
 
+## Integrations
+
+- **Bindu (A2A agent)** — run ContractGuard as a discoverable, DID-identified microservice that other AI agents can call over the [A2A protocol](https://github.com/getbindu/Bindu). Optional pay-per-scan via x402 (USDC on Base). See [examples/bindu](examples/bindu/).
+
 ## Roadmap
 
 - [ ] OCR support for scanned PDF contracts
