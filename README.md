@@ -180,6 +180,9 @@ contractguard batch ./contracts/
 
 # Batch scan and save a markdown report per contract
 contractguard batch ./contracts/ --output-dir reports/
+
+# Compare two versions of a contract — see what got better or worse
+contractguard compare lease-v1.pdf lease-v2.pdf
 ```
 
 ### Python API
@@ -395,7 +398,7 @@ Yes. Use `--json` to get structured output that can be parsed by other tools. Ex
 
 - [ ] OCR support for scanned PDF contracts
 - [x] Batch scanning (analyze multiple contracts at once)
-- [ ] Contract comparison (diff two versions of a contract)
+- [x] Contract comparison (diff two versions of a contract)
 - [ ] Clause-by-clause negotiation draft generation
 - [ ] Web UI (Streamlit/Gradio)
 - [ ] Pre-built contract templates for common use cases

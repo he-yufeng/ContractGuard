@@ -147,6 +147,47 @@ def batch(path: str, model: str | None, api_key: str | None, base_url: str | Non
 
 
 @main.command()
+@click.argument("before", type=click.Path(exists=True))
+@click.argument("after", type=click.Path(exists=True))
+@click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
+@click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
+@click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
+@click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
+def compare(before: str, after: str, model: str | None, api_key: str | None,
+            base_url: str | None, lang: str):
+    """Compare two versions of a contract and show what changed.
+
+    \b
+    Examples:
+        contractguard compare lease-v1.pdf lease-v2.pdf
+    """
+    from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
+    from contractguard.compare import compare_results
+    from contractguard.parser import extract_text
+    from contractguard.report import print_comparison
+
+    model = model or DEFAULT_MODEL
+
+    def _analyze(path: str, label: str) -> object:
+        with console.status(f"[bold blue]Analyzing {label}...[/bold blue]"):
+            try:
+                return analyze_contract(
+                    contract_text=extract_text(path),
+                    model=model,
+                    api_key=api_key,
+                    base_url=base_url,
+                    lang=lang,
+                )
+            except Exception as e:
+                console.print(f"[bold red]Error analyzing {label}:[/bold red] {e}")
+                sys.exit(1)
+
+    before_result = _analyze(before, Path(before).name)
+    after_result = _analyze(after, Path(after).name)
+    print_comparison(compare_results(before_result, after_result))
+
+
+@main.command()
 def web():
     """Launch the web UI (requires: pip install contractguard[web])."""
     try:

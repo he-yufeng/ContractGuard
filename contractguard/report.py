@@ -10,6 +10,7 @@ from rich.table import Table
 from rich.text import Text
 
 from contractguard.batch import BatchItem, summarize_batch
+from contractguard.compare import ContractComparison
 from contractguard.models import AnalysisResult, Issue, Protection, Severity
 
 console = Console()
@@ -262,3 +263,41 @@ def print_batch_summary(items: list[BatchItem]) -> None:
         + f" · [bold red]{summary.total_red_flags}[/bold red] red flags"
         + f" · [bold yellow]{summary.total_warnings}[/bold yellow] warnings"
     )
+
+
+def print_comparison(comparison: ContractComparison) -> None:
+    """Print what changed between two analyzed versions of a contract."""
+    delta = comparison.score_delta
+    if delta > 0:
+        arrow, color = "↑", "green"
+    elif delta < 0:
+        arrow, color = "↓", "red"
+    else:
+        arrow, color = "→", "white"
+
+    console.print()
+    console.print(Panel(
+        f"Fairness: [bold]{comparison.grade_before}[/bold] ({comparison.score_before}/100)"
+        f"  →  [bold]{comparison.grade_after}[/bold] ({comparison.score_after}/100)"
+        f"   [{color}]{arrow} {delta:+d}[/{color}]",
+        title="Contract Comparison",
+        border_style=color,
+    ))
+
+    def _list(issues: list[Issue], title: str, color: str, icon: str) -> None:
+        if not issues:
+            return
+        console.print(f"\n[bold {color}]{icon} {title}[/bold {color}]")
+        for issue in issues:
+            console.print(f"  [{color}]•[/{color}] {issue.title} ({issue.clause})")
+
+    _list(comparison.resolved_red_flags, "Red flags resolved", "green", "✔")
+    _list(comparison.added_red_flags, "New red flags", "red", "⬤")
+    _list(comparison.resolved_warnings, "Warnings resolved", "green", "✔")
+    _list(comparison.added_warnings, "New warnings", "yellow", "⚠")
+
+    if not any([
+        comparison.resolved_red_flags, comparison.added_red_flags,
+        comparison.resolved_warnings, comparison.added_warnings,
+    ]):
+        console.print("\n[dim]No change in flagged issues between the two versions.[/dim]")
