@@ -87,6 +87,66 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
 
 
 @main.command()
+@click.argument("path", type=click.Path(exists=True))
+@click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
+@click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
+@click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
+@click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
+@click.option("--output-dir", "-o", type=click.Path(), help="Save a markdown report per contract into this directory.")
+def batch(path: str, model: str | None, api_key: str | None, base_url: str | None,
+          lang: str, output_dir: str | None):
+    """Scan multiple contracts at once: a folder (searched recursively) or a single file.
+
+    \b
+    Examples:
+        contractguard batch ./contracts/
+        contractguard batch ./contracts/ -o reports/
+    """
+    from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
+    from contractguard.batch import BatchItem, analyze_paths, discover_contracts
+    from contractguard.parser import extract_text
+    from contractguard.report import generate_markdown_report, print_batch_summary
+
+    model = model or DEFAULT_MODEL
+    paths = discover_contracts(path)
+    if not paths:
+        console.print("[yellow]No supported contract files found.[/yellow]")
+        return
+
+    console.print(f"[bold blue]Scanning {len(paths)} contract(s)...[/bold blue]")
+
+    def _analyze(p: Path) -> object:
+        return analyze_contract(
+            contract_text=extract_text(p),
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
+            lang=lang,
+        )
+
+    def _progress(item: BatchItem) -> None:
+        name = Path(item.path).name
+        if item.ok:
+            console.print(f"[green]✔[/green] {name}")
+        else:
+            console.print(f"[red]✘[/red] {name}: {item.error}")
+
+    items = analyze_paths(paths, _analyze, on_result=_progress)
+    print_batch_summary(items)
+
+    if output_dir:
+        out = Path(output_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        for item in items:
+            if item.result is None:
+                continue
+            (out / (Path(item.path).stem + ".md")).write_text(
+                generate_markdown_report(item.result), encoding="utf-8"
+            )
+        console.print(f"\n[green]✔[/green] Reports saved to {output_dir}")
+
+
+@main.command()
 def web():
     """Launch the web UI (requires: pip install contractguard[web])."""
     try:

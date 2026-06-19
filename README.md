@@ -174,6 +174,12 @@ contractguard scan contract.pdf --json --output report.json
 
 # Pass API key directly (instead of env variable)
 contractguard scan contract.pdf --api-key sk-or-...
+
+# Scan a whole folder of contracts at once (searched recursively)
+contractguard batch ./contracts/
+
+# Batch scan and save a markdown report per contract
+contractguard batch ./contracts/ --output-dir reports/
 ```
 
 ### Python API
@@ -388,7 +394,7 @@ Yes. Use `--json` to get structured output that can be parsed by other tools. Ex
 ## Roadmap
 
 - [ ] OCR support for scanned PDF contracts
-- [ ] Batch scanning (analyze multiple contracts at once)
+- [x] Batch scanning (analyze multiple contracts at once)
 - [ ] Contract comparison (diff two versions of a contract)
 - [ ] Clause-by-clause negotiation draft generation
 - [ ] Web UI (Streamlit/Gradio)

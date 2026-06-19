@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
+from contractguard.batch import BatchItem, summarize_batch
 from contractguard.models import AnalysisResult, Issue, Protection, Severity
 
 console = Console()
@@ -220,3 +224,41 @@ def generate_markdown_report(result: AnalysisResult) -> str:
             lines.append(f"- {item}")
 
     return "\n".join(lines)
+
+
+def print_batch_summary(items: list[BatchItem]) -> None:
+    """Print a table summarizing a batch run: one row per contract, plus totals."""
+    summary = summarize_batch(items)
+
+    table = Table(title="Batch Scan Results", title_style="bold", header_style="bold")
+    table.add_column("Contract")
+    table.add_column("Type")
+    table.add_column("Grade", justify="center")
+    table.add_column("Score", justify="right")
+    table.add_column("Red", justify="right")
+    table.add_column("Warn", justify="right")
+
+    for item in items:
+        name = Path(item.path).name
+        if item.result is None:
+            table.add_row(name, "[red]error[/red]", "-", "-", "-", "-")
+            continue
+        result = item.result
+        grade_color = GRADE_COLORS.get(result.fairness_grade, "white")
+        table.add_row(
+            name,
+            result.contract_type.value.replace("_", " ").title(),
+            f"[{grade_color}]{result.fairness_grade}[/{grade_color}]",
+            f"{result.fairness_score}/100",
+            str(len(result.red_flags)),
+            str(len(result.warnings)),
+        )
+
+    console.print()
+    console.print(table)
+    console.print(
+        f"\n[bold]{summary.succeeded}[/bold] analyzed"
+        + (f", [red]{summary.failed} failed[/red]" if summary.failed else "")
+        + f" · [bold red]{summary.total_red_flags}[/bold red] red flags"
+        + f" · [bold yellow]{summary.total_warnings}[/bold yellow] warnings"
+    )
