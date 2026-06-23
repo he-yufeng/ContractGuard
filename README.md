@@ -1,8 +1,6 @@
 <div align="center">
 
-# ContractGuard
-
-**AI-powered contract review agent — never sign a bad contract again.**
+<img src="docs/banner.png" alt="ContractGuard — never sign a bad contract again" width="100%">
 
 Upload any contract → get red flags, unfair terms, and plain-English explanations in seconds.
 
@@ -10,7 +8,7 @@ Upload any contract → get red flags, unfair terms, and plain-English explanati
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/he-yufeng/ContractGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/he-yufeng/ContractGuard/actions)
 
-**[English](README.md) | [中文](README_CN.md)**
+**[English](README.md) · [中文](README_CN.md)** &nbsp;·&nbsp; [Demo](#demo) · [Quick Start](#quick-start) · [How It Works](#how-it-works)
 
 </div>
 
@@ -282,6 +280,8 @@ ContractGuard automatically detects the contract type and tailors its analysis a
 | **Purchase Agreements** | Warranty terms, return/refund policy, liability limits, dispute resolution (arbitration vs. court), force majeure |
 
 ## How It Works
+
+![ContractGuard pipeline](docs/architecture.png)
 
 1. **Parse** — Extracts text from your document (PDF, DOCX, TXT). For PDFs, uses `pdfplumber` to handle complex layouts. For DOCX, uses `python-docx` to read all paragraphs.
 
