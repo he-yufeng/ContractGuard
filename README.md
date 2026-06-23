@@ -396,13 +396,15 @@ Yes. Use `--json` to get structured output that can be parsed by other tools. Ex
 
 ## Roadmap
 
-- [ ] OCR support for scanned PDF contracts
-- [x] Batch scanning (analyze multiple contracts at once)
-- [x] Contract comparison (diff two versions of a contract)
-- [ ] Clause-by-clause negotiation draft generation
-- [ ] Web UI (Streamlit/Gradio)
-- [ ] Pre-built contract templates for common use cases
-- [ ] Jurisdiction-aware analysis (US state laws, EU regulations, China)
+**Shipped:** batch scanning (analyze many contracts in one run) and contract comparison (diff two versions and surface what changed, clause by clause).
+
+**Planned:**
+
+- **OCR for scanned PDFs** — handle image-only contracts, not just text PDFs, which is where a lot of real paperwork actually lives.
+- **Jurisdiction-aware analysis** — judge clauses against a chosen jurisdiction (US state law, EU, China), since whether a term is risky depends on where it's enforced.
+- **Clause-by-clause negotiation drafts** — for each red flag, draft suggested replacement language, turning the report into the start of a redline.
+- **A web UI** — a Streamlit/Gradio front end for people who won't touch a CLI, with the same local-only handling.
+- **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
 
 ## Contributing
 
