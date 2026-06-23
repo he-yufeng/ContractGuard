@@ -1,8 +1,6 @@
 <div align="center">
 
-# ContractGuard
-
-**AI 合同审查 Agent — 再也不用盲签合同了。**
+<img src="docs/banner.png" alt="ContractGuard — 再也不用盲签合同了" width="100%">
 
 上传任意合同 → 秒级识别霸王条款、不公平条款，用大白话解释给你听。
 
@@ -10,7 +8,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/he-yufeng/ContractGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/he-yufeng/ContractGuard/actions)
 
-**[English](README.md) | [中文](README_CN.md)**
+**[English](README.md) · [中文](README_CN.md)** &nbsp;·&nbsp; [效果演示](#效果演示) · [快速上手](#快速上手) · [工作原理](#工作原理)
 
 </div>
 
@@ -264,6 +262,8 @@ ContractGuard 自动识别合同类型并针对性分析。每种类型有特定
 | **买卖合同** | 保修条款、退换货政策、责任上限、争议解决方式（仲裁 vs 法院）、不可抗力 |
 
 ## 工作原理
+
+![ContractGuard 流程](docs/architecture.png)
 
 1. **解析** — 从文档中提取文本。PDF 使用 `pdfplumber` 处理复杂排版，DOCX 使用 `python-docx` 读取所有段落。
 
