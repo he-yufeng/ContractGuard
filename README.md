@@ -110,7 +110,7 @@ FAIRNESS SCORE: D (28/100)
 ### 1. Install
 
 ```bash
-pip install contractguard
+pip install contractguardian
 ```
 
 ### 2. Set up your API key
@@ -406,6 +406,16 @@ Yes. Use `--json` to get structured output that can be parsed by other tools. Ex
 - **A web UI** — a Streamlit/Gradio front end for people who won't touch a CLI, with the same local-only handling.
 - **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
 
+## Related Projects
+
+ContractGuard is one of my applied agent projects. A few others worth a look:
+
+- **[CoreCoder](https://github.com/he-yufeng/CoreCoder)** — want to understand how a coding agent really works? Read the whole ~1k-line engine end to end, not a black box.
+- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — dropped into an unfamiliar codebase? It gives you a guided wiki and a where-to-start reading path, a self-hostable DeepWiki alternative.
+- **[FindJobs-Agent](https://github.com/he-yufeng/FindJobs-Agent)** — stop sifting job boards by hand: it ranks postings against your resume and runs mock interviews.
+- **[GitSense](https://github.com/he-yufeng/GitSense)** — want to contribute to open source? It finds issues worth your time and gauges whether your PR will get merged.
+- **[CodeABC](https://github.com/he-yufeng/CodeABC)** — understand any codebase even if you don't code, built for non-programmers.
+
 ## Contributing
 
 Contributions are welcome! Here's how you can help:
@@ -415,6 +425,16 @@ Contributions are welcome! Here's how you can help:
 - **Improve prompts** — Better LLM prompts for more accurate analysis
 - **Add languages** — Test with contracts in different languages and report results
 - **Build integrations** — MCP server, VS Code extension, Slack bot, etc.
+
+## Related Projects
+
+A few other tools I've built, in case they're useful:
+
+- **[CoreCoder](https://github.com/he-yufeng/CoreCoder)** — understand how a coding agent really works by reading the whole ~1k-line engine, not a black box
+- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — dropped into an unfamiliar codebase? a guided wiki with a where-to-start reading path (self-hostable DeepWiki alternative)
+- **[FindJobs-Agent](https://github.com/he-yufeng/FindJobs-Agent)** — stop sifting job boards: it ranks postings against your resume and runs mock interviews
+- **[GitSense](https://github.com/he-yufeng/GitSense)** — want to contribute to open source? find issues worth your time and gauge if your PR will get merged
+- **[CodeABC](https://github.com/he-yufeng/CodeABC)** — understand any codebase even if you don't code, built for non-programmers
 
 ## License
 
