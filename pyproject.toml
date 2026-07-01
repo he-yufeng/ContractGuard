@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "contractguard"
+name = "contractguardian"
 version = "0.1.0"
 description = "AI-powered contract review agent — scan any contract for red flags, unfair terms, and missing protections"
 readme = "README.md"

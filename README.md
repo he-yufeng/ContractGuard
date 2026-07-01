@@ -4,6 +4,7 @@
 
 Upload any contract → get red flags, unfair terms, and plain-English explanations in seconds.
 
+[![PyPI](https://img.shields.io/pypi/v/contractguardian.svg)](https://pypi.org/project/contractguardian/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/he-yufeng/ContractGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/he-yufeng/ContractGuard/actions)
@@ -425,16 +426,6 @@ Contributions are welcome! Here's how you can help:
 - **Improve prompts** — Better LLM prompts for more accurate analysis
 - **Add languages** — Test with contracts in different languages and report results
 - **Build integrations** — MCP server, VS Code extension, Slack bot, etc.
-
-## Related Projects
-
-A few other tools I've built, in case they're useful:
-
-- **[CoreCoder](https://github.com/he-yufeng/CoreCoder)** — understand how a coding agent really works by reading the whole ~1k-line engine, not a black box
-- **[RepoWiki](https://github.com/he-yufeng/RepoWiki)** — dropped into an unfamiliar codebase? a guided wiki with a where-to-start reading path (self-hostable DeepWiki alternative)
-- **[FindJobs-Agent](https://github.com/he-yufeng/FindJobs-Agent)** — stop sifting job boards: it ranks postings against your resume and runs mock interviews
-- **[GitSense](https://github.com/he-yufeng/GitSense)** — want to contribute to open source? find issues worth your time and gauge if your PR will get merged
-- **[CodeABC](https://github.com/he-yufeng/CodeABC)** — understand any codebase even if you don't code, built for non-programmers
 
 ## License
 
