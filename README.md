@@ -55,52 +55,7 @@ contractguard scan my-lease.pdf
      California law requires 24-hour written notice.
      Suggestion: Add "with 24 hours written notice"
 
-  3. Tenant pays for structural repairs
-     Clause: Section 4
-     "Tenant is responsible for all maintenance and repairs
-      including plumbing, electrical systems, and structural elements"
-     Structural repairs are typically the landlord's responsibility.
-     Suggestion: Limit tenant responsibility to minor maintenance only.
-
-  4. One-sided termination clause
-     Clause: Section 10
-     "Landlord may terminate this Lease at any time with
-      thirty (30) days' written notice for any reason"
-     Tenant has no equivalent right. This creates an imbalance.
-     Suggestion: Add mutual termination rights or require cause.
-
-  5. Tenant pays landlord's attorney fees regardless of outcome
-     Clause: Section 12
-     "Tenant shall be responsible for all attorney's fees
-      incurred by Landlord, regardless of the outcome"
-     One-sided fee-shifting discourages tenants from asserting rights.
-     Suggestion: Change to mutual fee-shifting (loser pays).
-
-⚠ WARNINGS (3 found)
-==================================================
-
-  1. 90-day notice period for non-renewal
-     Clause: Section 1
-     Suggestion: Negotiate down to 30-60 days.
-
-  2. 15% rent increase cap on renewal
-     Clause: Section 2
-     Suggestion: Negotiate a lower cap or tie to CPI.
-
-  3. No subletting without landlord consent (may withhold for any reason)
-     Clause: Section 9
-     Suggestion: Add "consent shall not be unreasonably withheld."
-
-✔ PROTECTIONS (2 found)
-==================================================
-  ✔ Written notice required for termination (Section 1)
-  ✔ Lease modification requires written agreement from both parties (Section 13)
-
-❓ MISSING PROTECTIONS (4)
-  ✗ No habitability guarantee
-  ✗ No grace period for lease violations before termination
-  ✗ No limit on late fees
-  ✗ No provision for return of security deposit after move-out
+  … 3 more red flags, 3 warnings, 2 protections, 4 missing protections …
 
 FAIRNESS SCORE: D (28/100)
   5 red flags  3 warnings  2 protections  4 missing
@@ -148,113 +103,35 @@ That's it. Three steps, under 60 seconds.
 
 ## Usage
 
-### CLI Commands
-
 ```bash
-# Basic scan — PDF, DOCX, or TXT
+# Scan a PDF, DOCX, or TXT
 contractguard scan lease.pdf
-contractguard scan employment-agreement.docx
-contractguard scan nda.txt
 
-# Choose a specific model
+# Pick any OpenRouter / OpenAI / Ollama model
 contractguard scan contract.pdf --model openai/gpt-4o
-contractguard scan contract.pdf --model anthropic/claude-sonnet-4
-contractguard scan contract.pdf --model google/gemini-2.5-pro
-contractguard scan contract.pdf --model llama3.1    # local via Ollama
 
-# Export the report as a markdown file
+# Export a markdown report, or structured JSON for scripting
 contractguard scan contract.pdf --output report.md
-
-# Get structured JSON output (for integrations or scripting)
-contractguard scan contract.pdf --json
-
-# Save structured JSON directly
 contractguard scan contract.pdf --json --output report.json
 
-# Pass API key directly (instead of env variable)
-contractguard scan contract.pdf --api-key sk-or-...
-
-# Scan a whole folder of contracts at once (searched recursively)
-contractguard batch ./contracts/
-
-# Batch scan and save a markdown report per contract
+# Scan a whole folder, or diff two versions of a contract
 contractguard batch ./contracts/ --output-dir reports/
-
-# Compare two versions of a contract — see what got better or worse
 contractguard compare lease-v1.pdf lease-v2.pdf
 ```
 
 ### Python API
 
-Use ContractGuard as a library in your own applications:
-
 ```python
 from contractguard.analyzer import analyze_contract
 from contractguard.parser import extract_text
 
-# Step 1: Extract text from any supported document
-text = extract_text("my-lease.pdf")
-
-# Step 2: Run the AI analysis
-result = analyze_contract(text)
-
-# Step 3: Use the structured results
-print(f"Contract Type: {result.contract_type.value}")
-print(f"Fairness Score: {result.fairness_grade} ({result.fairness_score}/100)")
-print(f"Parties: {', '.join(result.parties)}")
-
-print(f"\n{len(result.red_flags)} Red Flags:")
+result = analyze_contract(extract_text("my-lease.pdf"))
+print(f"{result.fairness_grade} ({result.fairness_score}/100)")
 for flag in result.red_flags:
-    print(f"  - {flag.title} (Clause: {flag.clause})")
-    print(f"    Issue: {flag.explanation}")
-    print(f"    Fix: {flag.suggestion}")
-
-print(f"\n{len(result.warnings)} Warnings:")
-for warning in result.warnings:
-    print(f"  - {warning.title}: {warning.explanation}")
-
-print(f"\n{len(result.good_clauses)} Protections:")
-for protection in result.good_clauses:
-    print(f"  + {protection.title}: {protection.explanation}")
-
-print(f"\n{len(result.missing_protections)} Missing Protections:")
-for missing in result.missing_protections:
-    print(f"  ? {missing}")
-
-# Export to markdown
-from contractguard.report import generate_markdown_report
-md = generate_markdown_report(result)
-with open("report.md", "w") as f:
-    f.write(md)
+    print(f"- {flag.title} ({flag.clause}): {flag.suggestion}")
 ```
 
-### JSON Output Schema
-
-When using `--json`, ContractGuard outputs a structured JSON object you can pipe to other tools:
-
-```json
-{
-  "contract_type": "lease",
-  "summary": "A 12-month residential lease with several one-sided clauses...",
-  "parties": ["Apex Property Management LLC", "Tenant"],
-  "key_terms": ["Duration: 12 months", "Rent: $3,200/month", "Deposit: $6,400"],
-  "red_flags": [
-    {
-      "title": "Non-refundable security deposit",
-      "severity": "red",
-      "clause": "Section 3",
-      "quote": "The security deposit is non-refundable...",
-      "explanation": "Most states require deposits to be refundable...",
-      "suggestion": "Remove non-refundable language."
-    }
-  ],
-  "warnings": [...],
-  "good_clauses": [...],
-  "missing_protections": [...],
-  "fairness_score": 28,
-  "fairness_grade": "D"
-}
-```
+`--json` emits the full structured result — contract type, parties, key terms, red flags, warnings, protections, and fairness score — as a Pydantic-backed object ready to pipe into other tools.
 
 ## Supported File Formats
 
@@ -313,87 +190,21 @@ ContractGuard uses the OpenAI-compatible API format, so it works with virtually 
 | **Azure OpenAI** | Set `OPENAI_BASE_URL` to your Azure endpoint | Enterprise compliance |
 | **Any OpenAI-compatible API** | Set `OPENAI_BASE_URL` and `OPENAI_API_KEY` | Self-hosted models, vLLM, etc. |
 
-### Recommended Models
-
-| Model | Quality | Speed | Cost | Notes |
-|-------|---------|-------|------|-------|
-| `anthropic/claude-sonnet-4` (default) | Excellent | Fast | $$ | Best balance of quality and speed |
-| `openai/gpt-4o` | Excellent | Fast | $$ | Strong alternative |
-| `google/gemini-2.5-pro` | Excellent | Medium | $$ | Great for long contracts (1M context) |
-| `deepseek/deepseek-chat` | Good | Fast | $ | Budget-friendly option |
-| `llama3.1` (via Ollama) | Good | Varies | Free | Fully private, runs locally |
-
-## Try It with Sample Contracts
-
-The repo includes sample contracts intentionally loaded with red flags for testing:
-
-```bash
-git clone https://github.com/he-yufeng/ContractGuard.git
-cd ContractGuard
-pip install -e .
-
-export OPENROUTER_API_KEY=sk-or-...
-
-# Sample lease — has 5+ red flags including non-refundable deposit,
-# unlimited landlord access, and one-sided termination
-contractguard scan examples/sample_lease.txt
-
-# Sample NDA — has perpetual confidentiality obligations
-# and a broad non-solicitation clause
-contractguard scan examples/sample_nda.txt
-```
-
-## Common Red Flags ContractGuard Catches
-
-Here are some real examples of issues ContractGuard is designed to detect:
-
-**Leases:**
-- Non-refundable security deposits (illegal in many jurisdictions)
-- Landlord can enter without notice (most laws require 24-48 hours)
-- Tenant responsible for structural repairs (usually landlord's job)
-- Auto-renewal with no opt-out window
-- Excessive late fees
-
-**Employment:**
-- Non-compete that's too broad (geographic scope, duration, industry)
-- IP assignment that covers personal/side projects
-- At-will termination with no severance
-- Forced arbitration with company-selected arbitrator
-
-**NDAs:**
-- "Confidential information" defined so broadly it covers everything
-- Perpetual confidentiality obligations (no expiration)
-- Non-solicitation disguised within an NDA
-- No carve-out for independently developed information
-
-**SaaS/ToS:**
-- Provider can change terms unilaterally at any time
-- No data portability or export on termination
-- Limitation of liability that caps damages below subscription cost
-- Forced arbitration with class action waiver
+Default model is `anthropic/claude-sonnet-4`. `google/gemini-2.5-pro` handles very long contracts (1M context), `deepseek/deepseek-chat` is the budget pick, and any Ollama model keeps your data local.
 
 ## FAQ
 
 **Is this legal advice?**
-No. ContractGuard is an educational tool that helps you understand contract terms in plain language. It is not a substitute for qualified legal counsel. Always consult a licensed attorney for binding legal decisions.
+No. ContractGuard is an educational tool for understanding contract terms in plain language, not a substitute for a licensed attorney.
 
 **Is my contract data sent to the cloud?**
-The contract text is sent to whichever LLM provider you configure (OpenRouter, OpenAI, etc.) for analysis. If privacy is a concern, use a local model via Ollama — your data will never leave your machine. ContractGuard itself does not store, log, or transmit your data anywhere.
-
-**How accurate is it?**
-ContractGuard uses state-of-the-art LLMs (Claude Sonnet, GPT-4o) which are highly capable at legal text analysis. In testing with sample contracts, it consistently identifies major red flags that match professional legal review. However, it may miss subtle jurisdictional nuances or complex multi-clause interactions that an experienced attorney would catch. Use it as a first-pass filter to know what questions to ask, not as a final opinion.
-
-**What languages are supported?**
-ContractGuard works with contracts in any language the underlying LLM supports. English produces the best results. Chinese, Spanish, French, German, Japanese, and Korean contracts also work well with models like Claude and GPT-4o.
-
-**Can I use it for business / commercial purposes?**
-Yes. ContractGuard is MIT licensed — you can use it freely in personal and commercial projects, integrate it into your SaaS product, or modify it however you want.
+Only to the LLM provider you configure. For full privacy, use a local model via Ollama — the text never leaves your machine. ContractGuard itself stores and logs nothing.
 
 **What's the maximum contract length?**
-ContractGuard supports contracts up to ~30,000 tokens (~120,000 characters / ~60 pages). Longer documents are automatically truncated. For very long contracts, consider using a model with a large context window like `google/gemini-2.5-pro` (1M tokens).
+About 30,000 tokens (~60 pages); longer documents are truncated. Use a large-context model like `google/gemini-2.5-pro` for very long contracts.
 
-**Can I use it in CI/CD or automated pipelines?**
-Yes. Use `--json` to get structured output that can be parsed by other tools. Exit code is 0 on success, 1 on error. Example: `contractguard scan contract.pdf --json | jq '.red_flags | length'`
+**Can I use it in CI/CD?**
+Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g. `contractguard scan contract.pdf --json | jq '.red_flags | length'`.
 
 ## Roadmap
 
@@ -430,13 +241,3 @@ Contributions are welcome! Here's how you can help:
 ## License
 
 [MIT](LICENSE) — use it however you want.
-
----
-
-<div align="center">
-
-**If ContractGuard saved you from a bad contract, consider giving it a star!**
-
-[Report a Bug](https://github.com/he-yufeng/ContractGuard/issues) · [Request a Feature](https://github.com/he-yufeng/ContractGuard/issues)
-
-</div>
