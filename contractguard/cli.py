@@ -29,7 +29,7 @@ def main():
 @click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
 @click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
 @click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
-@click.option("--output", "-o", type=click.Path(), help="Save report to file (.html for self-contained HTML, .json with --json)")
+@click.option("--output", "-o", type=click.Path(), help="Save report to file (.html writes self-contained HTML)")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
 def scan(file: str, model: str | None, api_key: str | None, base_url: str | None,
