@@ -29,7 +29,7 @@ def main():
 @click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
 @click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
 @click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
-@click.option("--output", "-o", type=click.Path(), help="Save report to file. Uses JSON when --json is set.")
+@click.option("--output", "-o", type=click.Path(), help="Save report to file (.html for self-contained HTML, .json with --json)")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
 def scan(file: str, model: str | None, api_key: str | None, base_url: str | None,
@@ -199,10 +199,13 @@ def web():
 
 
 def _write_report(result, output: str, json_output: bool = False) -> None:
+    from contractguard.html import generate_html_report
     from contractguard.report import generate_markdown_report
 
     if json_output:
         content = result.model_dump_json(indent=2) + "\n"
+    elif output.lower().endswith((".html", ".htm")):
+        content = generate_html_report(result)
     else:
         content = generate_markdown_report(result)
     output_path = Path(output)
