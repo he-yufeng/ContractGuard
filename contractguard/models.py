@@ -28,6 +28,25 @@ class ContractType(str, Enum):
     UNKNOWN = "unknown"
 
 
+class StatuteStatus(str, Enum):
+    """Outcome of one deterministic statute check."""
+
+    VIOLATION = "violation"
+    OK = "ok"
+    UNKNOWN = "unknown"
+
+
+class StatuteCheck(BaseModel):
+    """One deterministic statute-rule evaluation."""
+
+    rule_id: str = Field(description="Stable rule identifier")
+    title: str = Field(description="Short rule name")
+    basis: str = Field(description="Legal basis for the rule")
+    status: StatuteStatus = Field(description="violation / ok / unknown")
+    detail: str = Field(description="What was found, or why it cannot be judged")
+    quote: str = Field(default="", description="Clause excerpt the verdict rests on")
+
+
 class Issue(BaseModel):
     """A single identified issue in the contract."""
 
@@ -63,6 +82,9 @@ class AnalysisResult(BaseModel):
     )
     missing_protections: list[str] = Field(
         default_factory=list, description="Important protections not found in the contract"
+    )
+    statute_checks: list[StatuteCheck] = Field(
+        default_factory=list, description="Deterministic statute-rule verdicts"
     )
     fairness_score: int = Field(
         ge=0, le=100, description="Overall fairness score from 0 (terrible) to 100 (excellent)"

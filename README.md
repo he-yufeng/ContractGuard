@@ -173,7 +173,9 @@ ContractGuard automatically detects the contract type and tailors its analysis a
 
 4. **Score** — Generates an overall fairness grade from A+ (excellent, fair to both parties) to F (heavily one-sided, many red flags). The score is based on the number and severity of issues found, balanced against protections present.
 
-5. **Report** — Outputs results as a beautiful Rich-formatted terminal report, or exports to Markdown/JSON for sharing or further processing.
+5. **Verify** — A deterministic statute checklist runs alongside the LLM, checking the rules where a wrong answer is a violation, not an opinion: probation length and pay caps, penalty scope, non-compete duration and compensation (PRC Labor Contract Law), earnest-money ratio and lease-term caps (PRC Civil Code). Each check returns violation / ok / unknown, and "unknown" is reported honestly when the clause is missing instead of passing as compliance. Disable with `--no-checklist`.
+
+6. **Report** — Outputs results as a beautiful Rich-formatted terminal report, or exports to Markdown/JSON/HTML for sharing or further processing.
 
 ## Configuration
 

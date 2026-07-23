@@ -32,8 +32,9 @@ def main():
 @click.option("--output", "-o", type=click.Path(), help="Save report to file (.html writes self-contained HTML)")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
+@click.option("--no-checklist", is_flag=True, help="Skip the deterministic statute checks")
 def scan(file: str, model: str | None, api_key: str | None, base_url: str | None,
-         output: str | None, json_output: bool, lang: str):
+         output: str | None, json_output: bool, lang: str, no_checklist: bool):
     """Scan a contract for red flags and unfair terms.
 
     Supports PDF, DOCX, and TXT files.
@@ -74,7 +75,12 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
             console.print(f"[bold red]Error:[/bold red] {e}")
             sys.exit(1)
 
-    # Step 3: Output results
+    # Step 3: Deterministic statute checks (no LLM involved)
+    if not no_checklist:
+        from contractguard.checklist import run_checklist
+        result.statute_checks = run_checklist(text, result.contract_type.value, lang)
+
+    # Step 4: Output results
     if json_output:
         console.print(result.model_dump_json(indent=2))
     else:

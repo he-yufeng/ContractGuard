@@ -11,7 +11,7 @@ from rich.text import Text
 
 from contractguard.batch import BatchItem, summarize_batch
 from contractguard.compare import ContractComparison
-from contractguard.models import AnalysisResult, Issue, Protection, Severity
+from contractguard.models import AnalysisResult, Issue, Protection, Severity, StatuteCheck
 
 console = Console()
 
@@ -53,6 +53,11 @@ def print_report(result: AnalysisResult) -> None:
     # Warnings
     if result.warnings:
         _print_issues(result.warnings, "WARNINGS", "yellow", "\u26a0")
+        console.print()
+
+    # Deterministic statute checks
+    if result.statute_checks:
+        _print_statute_checks(result.statute_checks)
         console.print()
 
     # Good clauses
@@ -130,6 +135,23 @@ def _print_missing(missing: list[str]) -> None:
     )
     for item in missing:
         console.print(f"  [dark_orange]\u2717[/dark_orange] {item}")
+
+
+def _print_statute_checks(checks: list[StatuteCheck]) -> None:
+    """Print deterministic statute-rule verdicts."""
+    violations = sum(1 for c in checks if c.status.value == "violation")
+    console.print(
+        f"\n[bold cyan]§ STATUTE CHECKS ({violations} violation(s) of {len(checks)})[/bold cyan]"
+    )
+    console.print(f"[cyan]{'=' * 50}[/cyan]")
+    style = {"violation": ("red", "x"), "ok": ("green", "v"), "unknown": ("dim", "?")}
+    for check in checks:
+        color, icon = style[check.status.value]
+        console.print(f"  [{color}]{icon}[/{color}] [bold]{check.title}[/bold]")
+        console.print(f"     [dim]{check.basis}[/dim]")
+        console.print(f"     {check.detail}")
+        if check.quote and check.status.value == "violation":
+            console.print(f'     [italic]"{check.quote}"[/italic]')
 
 
 def _print_score(result: AnalysisResult) -> None:
@@ -213,6 +235,15 @@ def generate_markdown_report(result: AnalysisResult) -> str:
                 f"**Suggestion:** {issue.suggestion}",
                 "",
             ])
+
+    if result.statute_checks:
+        lines.extend(["", "## Statute Checks", ""])
+        for check in result.statute_checks:
+            icon = {"violation": "x", "ok": "v", "unknown": "?"}[check.status.value]
+            lines.append(f"- [{icon}] **{check.title}** ({check.basis})")
+            lines.append(f"  {check.detail}")
+            if check.quote and check.status.value == "violation":
+                lines.append(f"  > {check.quote}")
 
     if result.good_clauses:
         lines.extend(["", "## Protections Found", ""])

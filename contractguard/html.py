@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import html
 
-from contractguard.models import AnalysisResult, Issue, Protection
+from contractguard.models import AnalysisResult, Issue, Protection, StatuteCheck
 
 _GRADE_HEX = {
     "A+": "#16a34a", "A": "#16a34a", "B+": "#4d7c0f", "B": "#ca8a04",
@@ -64,6 +64,22 @@ def _protection_card(protection: Protection) -> str:
     </div>"""
 
 
+_STATUTE_CARD_CLASS = {"violation": "red", "ok": "green", "unknown": ""}
+_STATUTE_LABEL = {"violation": "VIOLATION", "ok": "OK", "unknown": "UNKNOWN"}
+
+
+def _statute_card(check: StatuteCheck) -> str:
+    status = check.status.value
+    quote = f'<div class="quote">{_esc(check.quote)}</div>' if check.quote and status == "violation" else ""
+    return f"""
+    <div class="card {_STATUTE_CARD_CLASS[status]}">
+      <h3>{_esc(check.title)}</h3>
+      <div class="clause">{_esc(check.basis)} · {_STATUTE_LABEL[status]}</div>
+      {quote}
+      <p>{_esc(check.detail)}</p>
+    </div>"""
+
+
 def generate_html_report(result: AnalysisResult) -> str:
     """Render a self-contained HTML report (inline CSS, no external resources)."""
     grade_color = _GRADE_HEX.get(result.fairness_grade, "#475569")
@@ -73,6 +89,7 @@ def generate_html_report(result: AnalysisResult) -> str:
     red_cards = "".join(_issue_card(i, "red") for i in result.red_flags)
     warn_cards = "".join(_issue_card(i, "yellow") for i in result.warnings)
     good_cards = "".join(_protection_card(p) for p in result.good_clauses)
+    statute_cards = "".join(_statute_card(c) for c in result.statute_checks)
     missing = "".join(f"<li>{_esc(m)}</li>" for m in result.missing_protections)
 
     return f"""<!DOCTYPE html>
@@ -99,6 +116,7 @@ def generate_html_report(result: AnalysisResult) -> str:
   {"<h2>Key Terms</h2><ul class='terms'>" + key_terms + "</ul>" if key_terms else ""}
   {"<h2>Red Flags</h2>" + red_cards if red_cards else ""}
   {"<h2>Warnings</h2>" + warn_cards if warn_cards else ""}
+  {"<h2>Statute Checks</h2>" + statute_cards if statute_cards else ""}
   {"<h2>Good Clauses</h2>" + good_cards if good_cards else ""}
   {"<h2>Missing Protections</h2><ul class='missing'>" + missing + "</ul>" if missing else ""}
 
