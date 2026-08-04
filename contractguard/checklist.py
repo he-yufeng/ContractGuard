@@ -403,11 +403,105 @@ def check_lease_term(text: str, lang: str) -> StatuteCheck:
     )
 
 
+# 《劳动法》第四十四条的三档加班费率下限
+_OVERTIME_DAY_TYPES = [
+    (("法定节假日", "节假日", "法定假日", "public holiday"), 300),
+    (("休息日", "周末", "rest day", "weekend"), 200),
+    (("工作日", "延时", "延长工作时间", "weekday", "overtime"), 150),
+]
+_OVERTIME_PAY_PCT = [
+    r"加班[^。；;]{0,24}?(?:工资|报酬|费用|加班费)[^。；;]{0,16}?([0-9]+)\s*%",
+    r"(?:加班工资|加班费)[^。；;]{0,16}?按?([0-9]+)\s*%",
+    r"[Oo]vertime[^.]{0,40}?([0-9]+)\s*%",
+]
+_OVERTIME_WAIVER = [
+    "自愿放弃加班费", "放弃加班工资", "不再另行支付加班费",
+    "不再支付加班工资", "无需支付加班费", "不支付加班费",
+    "waive any overtime pay", "no overtime pay",
+]
+_OVERTIME_BUNDLED = [
+    "工资已包含加班", "薪资已包含加班", "包薪", "工资中已含加班",
+    "salary already includes overtime", "overtime is included in the salary",
+]
+
+
+def _overtime_floor(context: str) -> int:
+    """Statutory floor for the day type mentioned nearest the rate."""
+    for markers, floor in _OVERTIME_DAY_TYPES:
+        if any(marker in context for marker in markers):
+            return floor
+    return 150  # no day type named: the weekday rate is the minimum
+
+
+def check_overtime_pay(text: str, lang: str) -> StatuteCheck:
+    """Overtime pay must meet the statutory 150/200/300% floors."""
+    basis = "《劳动法》第四十四条 / PRC Labor Law, Art. 44"
+    rule_id = "cn_overtime_pay_floor"
+    title = "加班费下限 / Overtime pay floor"
+
+    for marker in _OVERTIME_WAIVER:
+        if marker in text:
+            return StatuteCheck(
+                rule_id=rule_id,
+                title=title,
+                basis=basis,
+                status=StatuteStatus.VIOLATION,
+                detail="约定免除加班费，法定费率不得以约定排除 / "
+                "The contract waives overtime pay, which the statutory floors forbid.",
+                quote=_excerpt(text, marker),
+            )
+
+    rate, rate_quote = _search_number(_OVERTIME_PAY_PCT, text)
+    if rate is None:
+        for marker in _OVERTIME_BUNDLED:
+            if marker in text:
+                return StatuteCheck(
+                    rule_id=rule_id,
+                    title=title,
+                    basis=basis,
+                    status=StatuteStatus.UNKNOWN,
+                    detail="约定工资已含加班费（包薪）：是否达标取决于工资拆分会否仍达法定费率，"
+                    "文本无法判断 / Salary stated to include overtime; compliance "
+                    "depends on the split, which the text does not show.",
+                    quote=_excerpt(text, marker),
+                )
+        return StatuteCheck(
+            rule_id=rule_id,
+            title=title,
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="未找到明确的加班费率，无法判断 / No explicit overtime rate found.",
+        )
+
+    context = _excerpt(text, rate_quote, span=80)
+    floor = _overtime_floor(context)
+    if rate < floor:
+        return StatuteCheck(
+            rule_id=rule_id,
+            title=title,
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail=f"加班费率 {rate}% 低于该类时段法定下限 {floor}% / "
+            f"Overtime rate of {rate}% is below the {floor}% statutory floor for that day type.",
+            quote=context,
+        )
+    return StatuteCheck(
+        rule_id=rule_id,
+        title=title,
+        basis=basis,
+        status=StatuteStatus.OK,
+        detail=f"加班费率 {rate}% 达到下限 {floor}% / "
+        f"Overtime rate of {rate}% meets the {floor}% floor.",
+        quote=context,
+    )
+
+
 _EMPLOYMENT_RULES = [
     check_probation_duration,
     check_probation_wage,
     check_noncompete,
     check_penalty_scope,
+    check_overtime_pay,
 ]
 _LEASE_RULES = [check_earnest_money, check_lease_term]
 

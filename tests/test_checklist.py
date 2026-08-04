@@ -186,3 +186,52 @@ def test_checks_flow_into_markdown_and_html():
     assert "试用期上限" in md
     assert "Statute Checks" in html
     assert "VIOLATION" in html
+
+
+# ---------------------------------------------------------------------------
+# Overtime pay floor (Labor Law art. 44)
+# ---------------------------------------------------------------------------
+
+
+def test_overtime_flat_rate_is_violation():
+    text = "加班工资按正常工资的100%计发，不再另行支付其他补贴。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "150%" in check.detail
+
+
+def test_overtime_below_holiday_floor_is_violation():
+    text = "法定节假日安排加班的，按正常工资的200%支付加班费。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "300%" in check.detail
+
+
+def test_overtime_weekday_at_floor_is_ok():
+    text = "工作日延时加班的，按不低于正常工资的150%支付加班工资。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_overtime_rest_day_above_floor_is_ok():
+    text = "休息日安排加班又不能补休的，按正常工资的200%支付报酬。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_overtime_waiver_is_violation():
+    text = "员工自愿放弃加班费，公司无需支付任何形式的加班补偿。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_overtime_bundled_salary_is_unknown_not_ok():
+    text = "双方确认月工资已包含加班工资，具体工作时长由公司安排。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.UNKNOWN
+
+
+def test_overtime_no_clause_is_unknown():
+    text = "劳动合同期限三年，月工资一万元，试用期六个月。"
+    check = _checks(text)["cn_overtime_pay_floor"]
+    assert check.status == StatuteStatus.UNKNOWN
