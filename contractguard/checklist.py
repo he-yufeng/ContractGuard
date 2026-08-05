@@ -496,12 +496,49 @@ def check_overtime_pay(text: str, lang: str) -> StatuteCheck:
     )
 
 
+
+_SOCIAL_WAIVER = [
+    "自愿放弃社保", "自愿放弃缴纳社保", "自愿放弃社会保险",
+    "放弃社保", "放弃缴纳社会保险", "不再缴纳社会保险",
+    "不缴纳社会保险", "不予缴纳社保", "无需缴纳社保",
+    "社保补贴代替缴纳", "社保补贴替代", "以补贴形式代替社保",
+    "waive social insurance", "social insurance subsidy in lieu",
+]
+
+
+def check_social_insurance(text: str, lang: str) -> StatuteCheck:
+    """Social insurance participation is statutory; opt-out clauses are void."""
+    basis = "《劳动法》第七十二条 / PRC Labor Law, Art. 72"
+    rule_id = "cn_social_insurance_waiver"
+    title = "社保强制参保 / Mandatory social insurance"
+
+    for marker in _SOCIAL_WAIVER:
+        if marker in text:
+            return StatuteCheck(
+                rule_id=rule_id,
+                title=title,
+                basis=basis,
+                status=StatuteStatus.VIOLATION,
+                detail="约定放弃或以补贴替代社保缴纳，依法无效 / The contract waives or "
+                "substitutes social insurance with cash, which is void by statute.",
+                quote=_excerpt(text, marker),
+            )
+    return StatuteCheck(
+        rule_id=rule_id,
+        title=title,
+        basis=basis,
+        status=StatuteStatus.OK,
+        detail="未发现放弃或替代社保的约定 / No waiver or cash-substitution clause found.",
+    )
+
+
 _EMPLOYMENT_RULES = [
     check_probation_duration,
     check_probation_wage,
     check_noncompete,
     check_penalty_scope,
     check_overtime_pay,
+    check_social_insurance,
 ]
 _LEASE_RULES = [check_earnest_money, check_lease_term]
 

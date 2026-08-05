@@ -235,3 +235,32 @@ def test_overtime_no_clause_is_unknown():
     text = "劳动合同期限三年，月工资一万元，试用期六个月。"
     check = _checks(text)["cn_overtime_pay_floor"]
     assert check.status == StatuteStatus.UNKNOWN
+
+
+# ---------------------------------------------------------------------------
+# Social insurance opt-out is void (Labor Law art. 72)
+# ---------------------------------------------------------------------------
+
+
+def test_social_waiver_clause_is_violation():
+    text = "乙方自愿放弃缴纳社会保险，甲方不再为其缴纳，双方互不追究。"
+    check = _checks(text)["cn_social_insurance_waiver"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "无效" in check.detail
+
+
+def test_social_cash_substitute_is_violation():
+    text = "甲方每月随工资支付社保补贴 800 元，以补贴形式代替社保，乙方认可。"
+    check = _checks(text)["cn_social_insurance_waiver"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_social_no_waiver_is_ok():
+    text = "甲乙双方签订劳动合同，期限三年，月工资一万元，甲方依法为乙方缴纳社会保险。"
+    check = _checks(text)["cn_social_insurance_waiver"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_social_check_present_in_result():
+    result = _result_with_checks("乙方自愿放弃社保。")
+    assert any(c.rule_id == "cn_social_insurance_waiver" for c in result.statute_checks)
