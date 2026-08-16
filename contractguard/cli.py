@@ -49,6 +49,11 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
     from contractguard.parser import extract_text
     from contractguard.report import print_report
 
+    if json_output:
+        # Progress chrome must not pollute stdout when the payload is JSON
+        # for a pipe; status lines go to stderr instead.
+        console = Console(stderr=True)
+
     model = model or DEFAULT_MODEL
 
     # Step 1: Parse document
@@ -82,7 +87,9 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
 
     # Step 4: Output results
     if json_output:
-        console.print(result.model_dump_json(indent=2))
+        # Rich soft-wraps at console width even when piped, corrupting JSON
+        # strings; stdout gets the payload untouched so `| jq` keeps working.
+        print(result.model_dump_json(indent=2))
     else:
         print_report(result)
 

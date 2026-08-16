@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import gradio as gr
 
-from contractguard.analyzer import analyze_contract
+from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
 from contractguard.parser import extract_text
 
 
@@ -17,7 +17,7 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
     except Exception as e:
         return f"**Error:** {e}", "", "", ""
 
-    kwargs = {"contract_text": text, "model": model or "gpt-4o", "lang": lang}
+    kwargs = {"contract_text": text, "model": model or DEFAULT_MODEL, "lang": lang}
     if api_key and api_key.strip():
         kwargs["api_key"] = api_key.strip()
 
@@ -111,7 +111,7 @@ def create_app() -> gr.Blocks:
                 )
                 model_input = gr.Textbox(
                     label="Model",
-                    value="gpt-4o",
+                    value=DEFAULT_MODEL,
                     placeholder="gpt-4o / anthropic/claude-sonnet-4",
                 )
                 api_key_input = gr.Textbox(
