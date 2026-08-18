@@ -126,6 +126,36 @@ def test_penalty_unknown_when_absent():
 
 
 # ---------------------------------------------------------------------------
+# Training penalty cap (LCL art. 22)
+# ---------------------------------------------------------------------------
+
+
+def test_training_penalty_over_cost_is_violation():
+    text = "公司为本岗位提供专项技术培训，培训费用共计 20000 元。服务期三年；提前离职的，应支付培训违约金 5 万元。"
+    check = _checks(text)["cn_training_penalty_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "50,000" in check.detail and "20,000" in check.detail
+
+
+def test_training_penalty_within_cost_is_ok():
+    text = "公司提供专项培训，培训费用为 5 万元。服务期两年；提前离职的，按约定支付违约金 30000 元。"
+    check = _checks(text)["cn_training_penalty_cap"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_training_penalty_unknown_without_cost():
+    text = "公司提供专项培训，服务期两年；提前离职的，应支付违约金 3 万元。"
+    check = _checks(text)["cn_training_penalty_cap"]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "培训费用" in check.detail
+
+
+def test_training_penalty_unknown_when_absent():
+    check = _checks("劳动合同期限三年，月工资一万元。")["cn_training_penalty_cap"]
+    assert check.status == StatuteStatus.UNKNOWN
+
+
+# ---------------------------------------------------------------------------
 # Earnest money cap (Civil Code art. 586)
 # ---------------------------------------------------------------------------
 

@@ -307,6 +307,88 @@ def check_penalty_scope(text: str, lang: str) -> StatuteCheck:
     )
 
 
+_MONEY_RE = r"([0-9]+(?:\.[0-9]+)?)\s*(万)?\s*(?:元|块)"
+
+
+def _money_amount(sentence: str) -> float | None:
+    m = re.search(_MONEY_RE, sentence)
+    if not m:
+        return None
+    value = float(m.group(1))
+    return value * 10000 if m.group(2) else value
+
+
+def check_training_penalty(text: str, lang: str) -> StatuteCheck:
+    """A training-service-period penalty may not exceed the training cost the
+    employer actually provided; the excess is void (LCL art. 22)."""
+    basis = "《劳动合同法》第二十二条 / PRC Labor Contract Law, Art. 22"
+    title = "培训违约金上限 / Training penalty cap"
+    sentences = re.split(r"(?<=[。；;.!？?])\s*", text)
+    penalty_sentences = []
+    for i, s in enumerate(sentences):
+        if "违约金" not in s and "liquidated damages" not in s.lower():
+            continue
+        # the anchor can sit in the preceding sentence ("公司提供专项培训，服务期两年。提前离职的，应支付违约金...")
+        context = s if i == 0 else sentences[i - 1] + s
+        if re.search(r"培训|服务期|training", context, re.IGNORECASE):
+            penalty_sentences.append(s)
+    if not penalty_sentences:
+        return StatuteCheck(
+            rule_id="cn_training_penalty_cap",
+            title=title,
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="未发现培训服务期违约金条款 / No training-tied penalty clause found.",
+        )
+
+    penalty = _money_amount(penalty_sentences[0])
+    cost_sentence = next(
+        (s for s in sentences if re.search(r"培训费[用]?|training (?:cost|fee)", s, re.IGNORECASE)),
+        None,
+    )
+    cost = _money_amount(cost_sentence) if cost_sentence else None
+
+    quote = _excerpt(text, penalty_sentences[0][:24])
+    if penalty is None:
+        return StatuteCheck(
+            rule_id="cn_training_penalty_cap",
+            title=title,
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="有培训违约金条款但金额无法解析 / Training penalty clause found, amount unparseable.",
+            quote=quote,
+        )
+    if cost is None:
+        return StatuteCheck(
+            rule_id="cn_training_penalty_cap",
+            title=title,
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail=f"违约金 {penalty:,.0f} 元，但全文未写明培训费用，上限无从核验 / "
+            f"Penalty of {penalty:,.0f} found, but no training cost is stated, so the cap cannot be checked.",
+            quote=quote,
+        )
+    if penalty > cost:
+        return StatuteCheck(
+            rule_id="cn_training_penalty_cap",
+            title=title,
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail=f"违约金 {penalty:,.0f} 元超过培训费用 {cost:,.0f} 元，超出部分依法无效 / "
+            f"Penalty {penalty:,.0f} exceeds the stated training cost {cost:,.0f}; the excess is void.",
+            quote=quote,
+        )
+    return StatuteCheck(
+        rule_id="cn_training_penalty_cap",
+        title=title,
+        basis=basis,
+        status=StatuteStatus.OK,
+        detail=f"违约金 {penalty:,.0f} 元未超过培训费用 {cost:,.0f} 元 / "
+        f"Penalty {penalty:,.0f} stays within the stated training cost {cost:,.0f}.",
+        quote=quote,
+    )
+
+
 def check_earnest_money(text: str, lang: str) -> StatuteCheck:
     """Earnest money (定金) must not exceed 20% of the contract value
     (Civil Code art. 586)."""
@@ -537,6 +619,7 @@ _EMPLOYMENT_RULES = [
     check_probation_wage,
     check_noncompete,
     check_penalty_scope,
+    check_training_penalty,
     check_overtime_pay,
     check_social_insurance,
 ]
