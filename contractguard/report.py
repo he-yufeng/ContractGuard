@@ -33,7 +33,7 @@ SEVERITY_ICONS = {
 }
 
 
-def print_report(result: AnalysisResult) -> None:
+def print_report(result: AnalysisResult, lang: str = "en") -> None:
     """Print a beautiful contract analysis report to the terminal."""
     console.print()
 
@@ -47,12 +47,12 @@ def print_report(result: AnalysisResult) -> None:
 
     # Red flags
     if result.red_flags:
-        _print_issues(result.red_flags, "RED FLAGS", "red", "\u2b24")
+        _print_issues(result.red_flags, "RED FLAGS", "red", "\u2b24", lang)
         console.print()
 
     # Warnings
     if result.warnings:
-        _print_issues(result.warnings, "WARNINGS", "yellow", "\u26a0")
+        _print_issues(result.warnings, "WARNINGS", "yellow", "\u26a0", lang)
         console.print()
 
     # Deterministic statute checks
@@ -105,7 +105,11 @@ def _print_summary(result: AnalysisResult) -> None:
             console.print(f"    \u2022 {term}")
 
 
-def _print_issues(issues: list[Issue], title: str, color: str, icon: str) -> None:
+def _redline_label(lang: str) -> str:
+    return "建议改写：" if lang == "zh" else "Suggested rewrite:"
+
+
+def _print_issues(issues: list[Issue], title: str, color: str, icon: str, lang: str = "en") -> None:
     """Print red flags or warnings."""
     console.print(f"\n[bold {color}]{icon} {title} ({len(issues)} found)[/bold {color}]")
     console.print(f"[{color}]{'=' * 50}[/{color}]")
@@ -116,6 +120,8 @@ def _print_issues(issues: list[Issue], title: str, color: str, icon: str) -> Non
         console.print(f'     [italic]"{issue.quote}"[/italic]')
         console.print(f"     {issue.explanation}")
         console.print(f"     [bold]Suggestion:[/bold] {issue.suggestion}")
+        if issue.redline:
+            console.print(f"     [bold]{_redline_label(lang)}[/bold] {issue.redline}")
 
 
 def _print_protections(protections: list[Protection]) -> None:
@@ -185,7 +191,7 @@ def _print_score(result: AnalysisResult) -> None:
     ))
 
 
-def generate_markdown_report(result: AnalysisResult) -> str:
+def generate_markdown_report(result: AnalysisResult, lang: str = "en") -> str:
     """Generate a markdown report string."""
     lines = [
         "# ContractGuard Analysis Report",
@@ -219,6 +225,8 @@ def generate_markdown_report(result: AnalysisResult) -> str:
                 f"**Suggestion:** {issue.suggestion}",
                 "",
             ])
+            if issue.redline:
+                lines.extend([f"**{_redline_label(lang)}** {issue.redline}", ""])
 
     if result.warnings:
         lines.extend(["", "## Warnings", ""])
@@ -235,6 +243,8 @@ def generate_markdown_report(result: AnalysisResult) -> str:
                 f"**Suggestion:** {issue.suggestion}",
                 "",
             ])
+            if issue.redline:
+                lines.extend([f"**{_redline_label(lang)}** {issue.redline}", ""])
 
     if result.statute_checks:
         lines.extend(["", "## Statute Checks", ""])

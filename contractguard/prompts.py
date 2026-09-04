@@ -42,7 +42,8 @@ Provide your analysis as a JSON object with this exact structure:
             "clause": "<section/clause reference>",
             "quote": "<exact quote from the contract>",
             "explanation": "<plain-language explanation of why this is a problem>",
-            "suggestion": "<what to negotiate or change>"
+            "suggestion": "<what to negotiate or change>",
+            "redline": "<replacement clause wording, ready to paste into a negotiation email>"
         }}
     ],
     "warnings": [
@@ -75,6 +76,8 @@ Warnings (severity "yellow") are concerns worth discussing but not deal-breakers
 
 Be specific. Quote the actual contract text. Provide actionable suggestions.
 
+For each red flag, also draft the fix in "redline": write the clause the way it should read, so the user can paste it straight into a negotiation email.
+
 IMPORTANT: Respond with ONLY the JSON object. No markdown, no code blocks, no explanation outside the JSON."""
 
 ANALYSIS_PROMPT_ZH = """仔细分析以下合同，审查每一条款。
@@ -97,7 +100,8 @@ ANALYSIS_PROMPT_ZH = """仔细分析以下合同，审查每一条款。
             "clause": "<章节/条款引用>",
             "quote": "<合同中的确切引用>",
             "explanation": "<用通俗语言解释为何这是个问题>",
-            "suggestion": "<需要协商或修改的内容>"
+            "suggestion": "<需要协商或修改的内容>",
+            "redline": "<建议替换的条款措辞，可直接粘贴到协商邮件中>"
         }}
     ],
     "warnings": [
@@ -129,6 +133,8 @@ ANALYSIS_PROMPT_ZH = """仔细分析以下合同，审查每一条款。
 警告（severity "yellow"）是值得讨论但并非交易破坏者的问题。例如：模糊的终止条款、略高于市场价的费用、较短的补救期限。
 
 请具体说明。引用合同的实际文本。提供可操作的建议。
+
+对每个红色警报，还要在 "redline" 中起草修改方案：写出条款修改后应有的措辞，让用户可以直接粘贴到协商邮件中。
 
 重要提示：仅以 JSON 对象形式回应。不要使用 Markdown、代码块或 JSON 之外的任何解释。"""
 

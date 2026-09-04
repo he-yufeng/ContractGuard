@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -56,6 +57,10 @@ class Issue(BaseModel):
     quote: str = Field(description="Direct quote from the contract")
     explanation: str = Field(description="Plain-language explanation of the issue")
     suggestion: str = Field(description="Suggested modification or action")
+    redline: str = Field(
+        default="",
+        description="Replacement clause wording, ready to paste into a negotiation email",
+    )
 
 
 class Protection(BaseModel):
@@ -90,3 +95,12 @@ class AnalysisResult(BaseModel):
         ge=0, le=100, description="Overall fairness score from 0 (terrible) to 100 (excellent)"
     )
     fairness_grade: str = Field(description="Letter grade: A+, A, B+, B, C+, C, D, F")
+
+    def to_json(self, *, indent: int | None = 2) -> str:
+        """JSON for the --json CLI output; empty per-issue redlines are omitted."""
+        data = self.model_dump(mode="json")
+        for issues in (data["red_flags"], data["warnings"]):
+            for issue in issues:
+                if not issue["redline"]:
+                    del issue["redline"]
+        return json.dumps(data, indent=indent, ensure_ascii=False)

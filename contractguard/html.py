@@ -33,6 +33,8 @@ h2 { font-size: 17px; margin: 28px 0 12px; }
 .clause { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: .04em; }
 .quote { background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 14px;
          font-style: italic; color: #334155; margin: 10px 0; }
+.redline { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;
+           padding: 10px 14px; font-size: 14px; color: #14532d; margin: 10px 0; }
 .label { font-weight: 600; font-size: 14px; }
 .terms li, .missing li { margin: 6px 0; }
 .footer { margin-top: 36px; color: #94a3b8; font-size: 12px; text-align: center; }
@@ -44,7 +46,12 @@ def _esc(text: object) -> str:
     return html.escape(str(text), quote=True)
 
 
-def _issue_card(issue: Issue, kind: str) -> str:
+def _issue_card(issue: Issue, kind: str, lang: str = "en") -> str:
+    redline_label = "建议改写：" if lang == "zh" else "Suggested rewrite:"
+    redline = (
+        f'<div class="redline"><span class="label">{redline_label}</span> {_esc(issue.redline)}</div>'
+        if issue.redline else ""
+    )
     return f"""
     <div class="card {kind}">
       <h3>{_esc(issue.title)}</h3>
@@ -52,6 +59,7 @@ def _issue_card(issue: Issue, kind: str) -> str:
       <div class="quote">{_esc(issue.quote)}</div>
       <p>{_esc(issue.explanation)}</p>
       <p><span class="label">Suggestion:</span> {_esc(issue.suggestion)}</p>
+      {redline}
     </div>"""
 
 
@@ -80,14 +88,14 @@ def _statute_card(check: StatuteCheck) -> str:
     </div>"""
 
 
-def generate_html_report(result: AnalysisResult) -> str:
+def generate_html_report(result: AnalysisResult, lang: str = "en") -> str:
     """Render a self-contained HTML report (inline CSS, no external resources)."""
     grade_color = _GRADE_HEX.get(result.fairness_grade, "#475569")
     score = max(0, min(100, result.fairness_score))
 
     key_terms = "".join(f"<li>{_esc(t)}</li>" for t in result.key_terms)
-    red_cards = "".join(_issue_card(i, "red") for i in result.red_flags)
-    warn_cards = "".join(_issue_card(i, "yellow") for i in result.warnings)
+    red_cards = "".join(_issue_card(i, "red", lang) for i in result.red_flags)
+    warn_cards = "".join(_issue_card(i, "yellow", lang) for i in result.warnings)
     good_cards = "".join(_protection_card(p) for p in result.good_clauses)
     statute_cards = "".join(_statute_card(c) for c in result.statute_checks)
     missing = "".join(f"<li>{_esc(m)}</li>" for m in result.missing_protections)

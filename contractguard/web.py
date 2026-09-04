@@ -59,26 +59,28 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
 
     # Red flags & warnings
     issues_md = ""
+    redline_label = "建议改写：" if lang == "zh" else "Suggested rewrite:"
+
+    def _issue_md(rank: int, issue) -> str:
+        block = (
+            f"### {rank}. {issue.title}\n"
+            f"**Clause:** {issue.clause}  \n"
+            f"> {issue.quote}\n\n"
+            f"{issue.explanation}  \n"
+            f"**Suggestion:** {issue.suggestion}  \n"
+        )
+        if issue.redline:
+            block += f"**{redline_label}** {issue.redline}  \n"
+        return block + "\n---\n\n"
+
     if result.red_flags:
         issues_md += "## Red Flags\n\n"
         for i, f in enumerate(result.red_flags, 1):
-            issues_md += (
-                f"### {i}. {f.title}\n"
-                f"**Clause:** {f.clause}  \n"
-                f"> {f.quote}\n\n"
-                f"{f.explanation}  \n"
-                f"**Suggestion:** {f.suggestion}\n\n---\n\n"
-            )
+            issues_md += _issue_md(i, f)
     if result.warnings:
         issues_md += "## Warnings\n\n"
         for i, w in enumerate(result.warnings, 1):
-            issues_md += (
-                f"### {i}. {w.title}\n"
-                f"**Clause:** {w.clause}  \n"
-                f"> {w.quote}\n\n"
-                f"{w.explanation}  \n"
-                f"**Suggestion:** {w.suggestion}\n\n---\n\n"
-            )
+            issues_md += _issue_md(i, w)
 
     # Protections & missing
     protections_md = ""

@@ -89,13 +89,13 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
     if json_output:
         # Rich soft-wraps at console width even when piped, corrupting JSON
         # strings; stdout gets the payload untouched so `| jq` keeps working.
-        print(result.model_dump_json(indent=2))
+        print(result.to_json(indent=2))
     else:
-        print_report(result)
+        print_report(result, lang)
 
     # Step 4: Save report if requested
     if output:
-        _write_report(result, output, json_output=json_output)
+        _write_report(result, output, json_output=json_output, lang=lang)
         console.print(f"\n[green]\u2714[/green] Report saved to {output}")
 
 
@@ -154,7 +154,7 @@ def batch(path: str, model: str | None, api_key: str | None, base_url: str | Non
             if item.result is None:
                 continue
             (out / (Path(item.path).stem + ".md")).write_text(
-                generate_markdown_report(item.result), encoding="utf-8"
+                generate_markdown_report(item.result, lang), encoding="utf-8"
             )
         console.print(f"\n[green]✔[/green] Reports saved to {output_dir}")
 
@@ -211,16 +211,16 @@ def web():
     launch()
 
 
-def _write_report(result, output: str, json_output: bool = False) -> None:
+def _write_report(result, output: str, json_output: bool = False, lang: str = "en") -> None:
     from contractguard.html import generate_html_report
     from contractguard.report import generate_markdown_report
 
     if json_output:
-        content = result.model_dump_json(indent=2) + "\n"
+        content = result.to_json(indent=2) + "\n"
     elif output.lower().endswith((".html", ".htm")):
-        content = generate_html_report(result)
+        content = generate_html_report(result, lang)
     else:
-        content = generate_markdown_report(result)
+        content = generate_markdown_report(result, lang)
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")

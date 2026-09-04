@@ -210,13 +210,12 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run) and contract comparison (diff two versions and surface what changed, clause by clause).
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), and clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email).
 
 **Planned:**
 
 - **OCR for scanned PDFs** — handle image-only contracts, not just text PDFs, which is where a lot of real paperwork actually lives.
 - **Jurisdiction-aware analysis** — judge clauses against a chosen jurisdiction (US state law, EU, China), since whether a term is risky depends on where it's enforced.
-- **Clause-by-clause negotiation drafts** — for each red flag, draft suggested replacement language, turning the report into the start of a redline.
 - **A web UI** — a Streamlit/Gradio front end for people who won't touch a CLI, with the same local-only handling.
 - **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
 
