@@ -1,10 +1,16 @@
-"""Deterministic statute checklist for Chinese contracts.
+"""Deterministic statute checklist, scoped by jurisdiction.
 
-The LLM analysis is good at judgment calls, but a few rules in Chinese
-labor and civil law are hard lines with numeric caps: probation length,
-probation pay, penalty scope, non-compete duration and compensation,
-earnest-money ratio, lease term. Those are checkable without a model,
-and a wrong answer there is not an opinion, it is a violation.
+The LLM analysis is good at judgment calls, but a few statute rules are
+hard lines with numeric caps, and a wrong answer there is not an
+opinion, it is a violation. Those are checkable without a model.
+
+Rules are grouped by jurisdiction:
+
+- ``cn``: PRC labor and civil law. Probation length, probation pay,
+  penalty scope, non-compete duration and compensation, overtime pay
+  floors, earnest-money ratio, lease term, social insurance.
+- ``us-ca``: California residential leases. Security-deposit cap and
+  refundability, landlord-entry notice, deposit-return deadline.
 
 Each rule returns one of three statuses:
 
@@ -19,6 +25,7 @@ from __future__ import annotations
 
 import re
 
+from contractguard import us_ca
 from contractguard.models import StatuteCheck, StatuteStatus
 
 _CN_NUM = {
@@ -624,18 +631,69 @@ _EMPLOYMENT_RULES = [
     check_social_insurance,
 ]
 _LEASE_RULES = [check_earnest_money, check_lease_term]
+_CA_LEASE_RULES = us_ca.RULES
 
 _EMPLOYMENT_HINTS = ("劳动", "聘用", "雇佣", "employ", "probation", "试用期")
 _LEASE_HINTS = ("租赁", "出租", "承租", "lease", "rent", "tenan")
 
+# Anchors strong enough to pin a contract to California: governing law, a
+# statute citation, or a California mailing address for the premises.
+_CA_ANCHORS = [
+    r"state of california",
+    r"california civil code",
+    r"laws of (?:the state of )?california",
+    r"governed by[^.]{0,60}california",
+    r",\s*ca\s+9\d{4}(?:-\d{4})?\b",
+]
 
-def run_checklist(contract_text: str, contract_type: str = "unknown", lang: str = "zh") -> list[StatuteCheck]:
+
+def detect_jurisdiction(text: str) -> str:
+    """Anchor the contract to "cn", "us-ca", or "unknown".
+
+    Only clear anchors count: a Chinese-language contract is PRC territory,
+    and a California governing-law clause or premises address pins us-ca.
+    Anything else stays unknown rather than getting guessed at.
+    """
+    if re.search(r"[\u4e00-\u9fff]", text):
+        return "cn"
+    for pattern in _CA_ANCHORS:
+        if re.search(pattern, text, re.IGNORECASE):
+            return "us-ca"
+    return "unknown"
+
+
+def _jurisdiction_unknown_check() -> StatuteCheck:
+    return StatuteCheck(
+        rule_id="jurisdiction_detection",
+        title="Statute-check jurisdiction / 法条核查法域",
+        basis="Jurisdiction auto-detection",
+        status=StatuteStatus.UNKNOWN,
+        detail="文本没有明确的法域锚点，只运行了主题匹配到的中国法规则；用 --jurisdiction cn 或 "
+        "us-ca 可显式指定 / No clear jurisdiction anchor found, so only the topic-matched PRC "
+        "rules ran. Pass --jurisdiction cn or us-ca to choose a jurisdiction explicitly.",
+    )
+
+
+def run_checklist(
+    contract_text: str,
+    contract_type: str = "unknown",
+    lang: str = "zh",
+    jurisdiction: str = "auto",
+) -> list[StatuteCheck]:
     """Evaluate every applicable statute rule against the contract text.
 
     When the type is known, only that type's rules run. When it is not,
     rules self-select by topic hints in the text, so an unclassified
     employment contract still gets its probation checked.
+
+    ``jurisdiction`` is "auto", "cn", or "us-ca". Auto anchors from the
+    text; when nothing anchors it, only the topic-matched PRC rules run
+    and the uncertainty is reported as its own unknown check instead of
+    silently picking a legal system.
     """
+    resolved = detect_jurisdiction(contract_text) if jurisdiction == "auto" else jurisdiction
+    if resolved not in ("cn", "us-ca"):
+        resolved = "unknown"
     text_l = contract_text.lower()
     employment = contract_type == "employment" or (
         contract_type == "unknown" and any(h in text_l or h in contract_text for h in _EMPLOYMENT_HINTS)
@@ -644,8 +702,13 @@ def run_checklist(contract_text: str, contract_type: str = "unknown", lang: str 
         contract_type == "unknown" and any(h in text_l or h in contract_text for h in _LEASE_HINTS)
     )
     checks: list[StatuteCheck] = []
-    if employment:
-        checks.extend(rule(contract_text, lang) for rule in _EMPLOYMENT_RULES)
-    if lease:
-        checks.extend(rule(contract_text, lang) for rule in _LEASE_RULES)
+    if resolved in ("cn", "unknown"):
+        if employment:
+            checks.extend(rule(contract_text, lang) for rule in _EMPLOYMENT_RULES)
+        if lease:
+            checks.extend(rule(contract_text, lang) for rule in _LEASE_RULES)
+    elif lease:
+        checks.extend(rule(contract_text, lang) for rule in _CA_LEASE_RULES)
+    if jurisdiction == "auto" and resolved == "unknown":
+        checks.append(_jurisdiction_unknown_check())
     return checks

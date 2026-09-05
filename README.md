@@ -117,6 +117,9 @@ contractguard scan contract.pdf --json --output report.json
 # Scan a whole folder, or diff two versions of a contract
 contractguard batch ./contracts/ --output-dir reports/
 contractguard compare lease-v1.pdf lease-v2.pdf
+
+# Force a jurisdiction for the statute checks (default is auto-detect)
+contractguard scan lease.pdf --jurisdiction us-ca
 ```
 
 ### Python API
@@ -173,7 +176,7 @@ ContractGuard automatically detects the contract type and tailors its analysis a
 
 4. **Score** — Generates an overall fairness grade from A+ (excellent, fair to both parties) to F (heavily one-sided, many red flags). The score is based on the number and severity of issues found, balanced against protections present.
 
-5. **Verify** — A deterministic statute checklist runs alongside the LLM, checking the rules where a wrong answer is a violation, not an opinion: probation length and pay caps, penalty scope, non-compete duration and compensation, the 150/200/300% overtime pay floors (PRC labor law), earnest-money ratio and lease-term caps (PRC Civil Code). Each check returns violation / ok / unknown, and "unknown" is reported honestly when the clause is missing instead of passing as compliance. Disable with `--no-checklist`.
+5. **Verify** — A deterministic statute checklist runs alongside the LLM, checking the rules where a wrong answer is a violation, not an opinion. The checklist is jurisdiction-aware (`--jurisdiction auto` by default, or force `cn` / `us-ca`). Chinese-language contracts get probation length and pay caps, penalty scope, non-compete duration and compensation, the 150/200/300% overtime pay floors (PRC labor law), and earnest-money ratio and lease-term caps (PRC Civil Code). Leases anchored in California get the residential-lease rules of the California Civil Code: the one-month security-deposit cap and the refundability requirement (§1950.5, as amended by AB 12), the 24-hour landlord-entry notice floor (§1954), and the 21-day deposit-return deadline with an itemized statement (§1950.5(g)). Each check returns violation / ok / unknown, and "unknown" is reported honestly when the clause is missing or the jurisdiction cannot be determined, instead of passing as compliance. Disable with `--no-checklist`.
 
 6. **Report** — Outputs results as a beautiful Rich-formatted terminal report, or exports to Markdown/JSON/HTML for sharing or further processing.
 
@@ -210,13 +213,11 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), and clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email).
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`).
 
 **Planned:**
 
 - **OCR for scanned PDFs** — handle image-only contracts, not just text PDFs, which is where a lot of real paperwork actually lives.
-- **Jurisdiction-aware analysis** — judge clauses against a chosen jurisdiction (US state law, EU, China), since whether a term is risky depends on where it's enforced.
-- **A web UI** — a Streamlit/Gradio front end for people who won't touch a CLI, with the same local-only handling.
 - **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
 
 ## Related Projects

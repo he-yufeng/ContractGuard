@@ -32,9 +32,11 @@ def main():
 @click.option("--output", "-o", type=click.Path(), help="Save report to file (.html writes self-contained HTML)")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
+@click.option("--jurisdiction", "-j", type=click.Choice(["auto", "cn", "us-ca"]), default="auto",
+              help="Jurisdiction for the statute checks (default: auto-detect)")
 @click.option("--no-checklist", is_flag=True, help="Skip the deterministic statute checks")
 def scan(file: str, model: str | None, api_key: str | None, base_url: str | None,
-         output: str | None, json_output: bool, lang: str, no_checklist: bool):
+         output: str | None, json_output: bool, lang: str, jurisdiction: str, no_checklist: bool):
     """Scan a contract for red flags and unfair terms.
 
     Supports PDF, DOCX, and TXT files.
@@ -44,6 +46,7 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
         contractguard scan lease.pdf
         contractguard scan contract.docx --model openai/gpt-4o
         contractguard scan nda.txt -o report.md
+        contractguard scan lease.pdf --jurisdiction us-ca
     """
     from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
     from contractguard.parser import extract_text
@@ -83,7 +86,7 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
     # Step 3: Deterministic statute checks (no LLM involved)
     if not no_checklist:
         from contractguard.checklist import run_checklist
-        result.statute_checks = run_checklist(text, result.contract_type.value, lang)
+        result.statute_checks = run_checklist(text, result.contract_type.value, lang, jurisdiction=jurisdiction)
 
     # Step 4: Output results
     if json_output:
@@ -105,9 +108,11 @@ def scan(file: str, model: str | None, api_key: str | None, base_url: str | None
 @click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
 @click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
+@click.option("--jurisdiction", "-j", type=click.Choice(["auto", "cn", "us-ca"]), default="auto",
+              help="Jurisdiction for the statute checks (default: auto-detect)")
 @click.option("--output-dir", "-o", type=click.Path(), help="Save a markdown report per contract into this directory.")
 def batch(path: str, model: str | None, api_key: str | None, base_url: str | None,
-          lang: str, output_dir: str | None):
+          lang: str, jurisdiction: str, output_dir: str | None):
     """Scan multiple contracts at once: a folder (searched recursively) or a single file.
 
     \b
@@ -117,6 +122,7 @@ def batch(path: str, model: str | None, api_key: str | None, base_url: str | Non
     """
     from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
     from contractguard.batch import BatchItem, analyze_paths, discover_contracts
+    from contractguard.checklist import run_checklist
     from contractguard.parser import extract_text
     from contractguard.report import generate_markdown_report, print_batch_summary
 
@@ -129,13 +135,16 @@ def batch(path: str, model: str | None, api_key: str | None, base_url: str | Non
     console.print(f"[bold blue]Scanning {len(paths)} contract(s)...[/bold blue]")
 
     def _analyze(p: Path) -> object:
-        return analyze_contract(
-            contract_text=extract_text(p),
+        text = extract_text(p)
+        result = analyze_contract(
+            contract_text=text,
             model=model,
             api_key=api_key,
             base_url=base_url,
             lang=lang,
         )
+        result.statute_checks = run_checklist(text, result.contract_type.value, lang, jurisdiction=jurisdiction)
+        return result
 
     def _progress(item: BatchItem) -> None:
         name = Path(item.path).name
