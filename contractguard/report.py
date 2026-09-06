@@ -12,6 +12,7 @@ from rich.text import Text
 from contractguard.batch import BatchItem, summarize_batch
 from contractguard.compare import ContractComparison
 from contractguard.models import AnalysisResult, Issue, Protection, Severity, StatuteCheck
+from contractguard.references import reference_for
 
 console = Console()
 
@@ -155,6 +156,9 @@ def _print_statute_checks(checks: list[StatuteCheck]) -> None:
         color, icon = style[check.status.value]
         console.print(f"  [{color}]{icon}[/{color}] [bold]{check.title}[/bold]")
         console.print(f"     [dim]{check.basis}[/dim]")
+        ref = reference_for(check.rule_id)
+        if ref:
+            console.print(f"     [dim underline]{ref}[/dim underline]")
         console.print(f"     {check.detail}")
         if check.quote and check.status.value == "violation":
             console.print(f'     [italic]"{check.quote}"[/italic]')
@@ -250,7 +254,9 @@ def generate_markdown_report(result: AnalysisResult, lang: str = "en") -> str:
         lines.extend(["", "## Statute Checks", ""])
         for check in result.statute_checks:
             icon = {"violation": "x", "ok": "v", "unknown": "?"}[check.status.value]
-            lines.append(f"- [{icon}] **{check.title}** ({check.basis})")
+            ref = reference_for(check.rule_id)
+            basis = f"[{check.basis}]({ref})" if ref else check.basis
+            lines.append(f"- [{icon}] **{check.title}** ({basis})")
             lines.append(f"  {check.detail}")
             if check.quote and check.status.value == "violation":
                 lines.append(f"  > {check.quote}")

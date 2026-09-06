@@ -5,6 +5,7 @@ from __future__ import annotations
 import html
 
 from contractguard.models import AnalysisResult, Issue, Protection, StatuteCheck
+from contractguard.references import reference_for
 
 _GRADE_HEX = {
     "A+": "#16a34a", "A": "#16a34a", "B+": "#4d7c0f", "B": "#ca8a04",
@@ -46,6 +47,14 @@ def _esc(text: object) -> str:
     return html.escape(str(text), quote=True)
 
 
+def _basis_html(check: StatuteCheck) -> str:
+    ref = reference_for(check.rule_id)
+    text = _esc(check.basis)
+    if not ref:
+        return text
+    return f'<a href="{_esc(ref)}" target="_blank" rel="noopener">{text}</a>'
+
+
 def _issue_card(issue: Issue, kind: str, lang: str = "en") -> str:
     redline_label = "建议改写：" if lang == "zh" else "Suggested rewrite:"
     redline = (
@@ -82,7 +91,7 @@ def _statute_card(check: StatuteCheck) -> str:
     return f"""
     <div class="card {_STATUTE_CARD_CLASS[status]}">
       <h3>{_esc(check.title)}</h3>
-      <div class="clause">{_esc(check.basis)} · {_STATUTE_LABEL[status]}</div>
+      <div class="clause">{_basis_html(check)} · {_STATUTE_LABEL[status]}</div>
       {quote}
       <p>{_esc(check.detail)}</p>
     </div>"""
