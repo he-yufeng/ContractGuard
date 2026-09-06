@@ -2,20 +2,61 @@
 
 from __future__ import annotations
 
+import os
+import tempfile
+
 import gradio as gr
 
 from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
+from contractguard.checklist import run_checklist
+from contractguard.html import generate_html_report
+from contractguard.models import StatuteCheck
 from contractguard.parser import extract_text
+
+# Same palette as the score card: red / green / gray.
+_STATUS_CHIPS = {
+    "en": {"violation": ("#ef4444", "VIOLATION"), "ok": ("#22c55e", "OK"), "unknown": ("#6b7280", "UNKNOWN")},
+    "zh": {"violation": ("#ef4444", "违规"), "ok": ("#22c55e", "符合"), "unknown": ("#6b7280", "无法判断")},
+}
+
+
+def _statute_md(checks: list[StatuteCheck], lang: str) -> str:
+    if not checks:
+        return ""
+    chips = _STATUS_CHIPS["zh" if lang == "zh" else "en"]
+    violations = sum(1 for c in checks if c.status.value == "violation")
+    if lang == "zh":
+        md = f"## 法条核查\n\n共 {len(checks)} 项核查，**{violations} 项违规**\n\n"
+        basis_label = "依据"
+    else:
+        md = f"## Statute Checks\n\n**{violations} violation(s)** of {len(checks)} checks\n\n"
+        basis_label = "Basis"
+    for i, check in enumerate(checks, 1):
+        color, label = chips[check.status.value]
+        md += f"### {i}. {check.title}\n"
+        md += f'<span style="color:{color}; font-weight:600;">{label}</span>  \n'
+        md += f"**{basis_label}:** {check.basis}  \n"
+        if check.quote:
+            md += f"> {check.quote}\n\n"
+        md += f"{check.detail}\n\n---\n\n"
+    return md
+
+
+def _write_html_report(result, lang: str) -> str:
+    fd, path = tempfile.mkstemp(prefix="contractguard-", suffix=".html")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        f.write(generate_html_report(result, lang))
+    return path
 
 
 def _analyze(file, model: str, api_key: str, lang: str = "en"):
     if file is None:
-        return "Upload a file to get started.", "", "", ""
+        return "Upload a file to get started.", "", "", "", "", None
 
     try:
         text = extract_text(file.name)
     except Exception as e:
-        return f"**Error:** {e}", "", "", ""
+        return f"**Error:** {e}", "", "", "", "", None
 
     kwargs = {"contract_text": text, "model": model or DEFAULT_MODEL, "lang": lang}
     if api_key and api_key.strip():
@@ -24,7 +65,12 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
     try:
         result = analyze_contract(**kwargs)
     except Exception as e:
-        return f"**Error:** {e}", "", "", ""
+        return f"**Error:** {e}", "", "", "", "", None
+
+    # Statute checks need no LLM; reuse the CLI engine with auto jurisdiction.
+    result.statute_checks = run_checklist(text, result.contract_type.value, lang)
+    statute_md = _statute_md(result.statute_checks, lang)
+    report_path = _write_html_report(result, lang)
 
     # Score card
     grade_colors = {
@@ -93,7 +139,7 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
         for m in result.missing_protections:
             protections_md += f"- {m}\n"
 
-    return score_html, summary_md, issues_md, protections_md
+    return score_html, summary_md, issues_md, protections_md, statute_md, report_path
 
 
 def create_app() -> gr.Blocks:
@@ -101,7 +147,7 @@ def create_app() -> gr.Blocks:
         gr.Markdown(
             "# ContractGuard\n\n"
             "Upload a contract and get an instant AI review with red flags, "
-            "warnings, protections, and a fairness score.\n\n"
+            "warnings, protections, statute checks, and a fairness score.\n\n"
             "*Not legal advice. Use as a first-pass filter before consulting a lawyer.*"
         )
 
@@ -138,10 +184,16 @@ def create_app() -> gr.Blocks:
             with gr.Column():
                 protections_output = gr.Markdown(label="Protections")
 
+        with gr.Row():
+            with gr.Column():
+                statute_output = gr.Markdown(label="Statute Checks")
+
+        report_output = gr.File(label="Download HTML Report")
+
         scan_btn.click(
             fn=_analyze,
             inputs=[file_input, model_input, api_key_input, lang_input],
-            outputs=[score_output, summary_output, issues_output, protections_output],
+            outputs=[score_output, summary_output, issues_output, protections_output, statute_output, report_output],
         )
 
     return app

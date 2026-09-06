@@ -117,6 +117,9 @@ contractguard compare lease-v1.pdf lease-v2.pdf
 
 # 强制指定法条核查的法域（默认 auto 自动识别）
 contractguard scan lease.pdf --jurisdiction us-ca
+
+# Web 界面：同时展示 LLM 分析和确定性法条核查面板
+contractguard web
 ```
 
 ### Python API
@@ -210,7 +213,7 @@ ContractGuard 使用 OpenAI 兼容 API 格式，几乎支持所有 LLM 服务商
 
 ## 路线图
 
-**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`）。
+**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`，LLM 分析和确定性法条核查面板同屏展示）。
 
 **规划中**：
 

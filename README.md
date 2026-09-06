@@ -120,6 +120,9 @@ contractguard compare lease-v1.pdf lease-v2.pdf
 
 # Force a jurisdiction for the statute checks (default is auto-detect)
 contractguard scan lease.pdf --jurisdiction us-ca
+
+# Web UI: LLM analysis plus the deterministic statute-check panel
+contractguard web
 ```
 
 ### Python API
@@ -213,7 +216,7 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`).
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel.
 
 **Planned:**
 
