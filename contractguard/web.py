@@ -12,6 +12,7 @@ from contractguard.checklist import run_checklist
 from contractguard.html import generate_html_report
 from contractguard.models import StatuteCheck
 from contractguard.parser import extract_text
+from contractguard.references import reference_for
 
 # Same palette as the score card: red / green / gray.
 _STATUS_CHIPS = {
@@ -35,7 +36,9 @@ def _statute_md(checks: list[StatuteCheck], lang: str) -> str:
         color, label = chips[check.status.value]
         md += f"### {i}. {check.title}\n"
         md += f'<span style="color:{color}; font-weight:600;">{label}</span>  \n'
-        md += f"**{basis_label}:** {check.basis}  \n"
+        ref = reference_for(check.rule_id)
+        basis_md = f"[{check.basis}]({ref})" if ref else check.basis
+        md += f"**{basis_label}:** {basis_md}  \n"
         if check.quote:
             md += f"> {check.quote}\n\n"
         md += f"{check.detail}\n\n---\n\n"
