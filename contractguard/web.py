@@ -9,7 +9,7 @@ import gradio as gr
 
 from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
 from contractguard.checklist import run_checklist
-from contractguard.html import generate_html_report
+from contractguard.html import generate_html_report, write_pdf_report
 from contractguard.models import StatuteCheck
 from contractguard.parser import extract_text
 
@@ -49,14 +49,15 @@ def _write_html_report(result, lang: str) -> str:
     return path
 
 
+
 def _analyze(file, model: str, api_key: str, lang: str = "en"):
     if file is None:
-        return "Upload a file to get started.", "", "", "", "", None
+        return "Upload a file to get started.", "", "", "", "", None, None
 
     try:
         text = extract_text(file.name)
     except Exception as e:
-        return f"**Error:** {e}", "", "", "", "", None
+        return f"**Error:** {e}", "", "", "", "", None, None
 
     kwargs = {"contract_text": text, "model": model or DEFAULT_MODEL, "lang": lang}
     if api_key and api_key.strip():
@@ -65,7 +66,7 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
     try:
         result = analyze_contract(**kwargs)
     except Exception as e:
-        return f"**Error:** {e}", "", "", "", "", None
+        return f"**Error:** {e}", "", "", "", "", None, None
 
     # Statute checks need no LLM; reuse the CLI engine with auto jurisdiction.
     result.statute_checks = run_checklist(text, result.contract_type.value, lang)
@@ -139,7 +140,8 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
         for m in result.missing_protections:
             protections_md += f"- {m}\n"
 
-    return score_html, summary_md, issues_md, protections_md, statute_md, report_path
+    pdf_path = write_pdf_report(result, lang)
+    return score_html, summary_md, issues_md, protections_md, statute_md, report_path, pdf_path
 
 
 def create_app() -> gr.Blocks:
@@ -189,11 +191,12 @@ def create_app() -> gr.Blocks:
                 statute_output = gr.Markdown(label="Statute Checks")
 
         report_output = gr.File(label="Download HTML Report")
+        pdf_output = gr.File(label="Download PDF Report (needs the pdf extra)")
 
         scan_btn.click(
             fn=_analyze,
             inputs=[file_input, model_input, api_key_input, lang_input],
-            outputs=[score_output, summary_output, issues_output, protections_output, statute_output, report_output],
+            outputs=[score_output, summary_output, issues_output, protections_output, statute_output, report_output, pdf_output],
         )
 
     return app
