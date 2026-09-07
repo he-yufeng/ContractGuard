@@ -142,3 +142,19 @@ def generate_html_report(result: AnalysisResult, lang: str = "en") -> str:
 </body>
 </html>
 """
+
+
+def write_pdf_report(result: AnalysisResult, lang: str = "en", path: str | None = None) -> str | None:
+    """PDF next to the HTML report, when the optional weasyprint extra is installed."""
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        return None  # pdf extra not installed; the HTML report still works
+    if path is None:
+        import os
+        import tempfile
+
+        fd, path = tempfile.mkstemp(prefix="contractguard-", suffix=".pdf")
+        os.close(fd)
+    HTML(string=generate_html_report(result, lang)).write_pdf(path)
+    return path
