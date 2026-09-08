@@ -294,3 +294,71 @@ def test_social_no_waiver_is_ok():
 def test_social_check_present_in_result():
     result = _result_with_checks("乙方自愿放弃社保。")
     assert any(c.rule_id == "cn_social_insurance_waiver" for c in result.statute_checks)
+
+
+# ---------------------------------------------------------------------------
+# Private-lending rate cap (SPC interpretation art. 25) and Civil Code 670
+# ---------------------------------------------------------------------------
+
+
+def _loan_checks(text: str):
+    return {c.rule_id: c for c in run_checklist(text, "loan", "zh")}
+
+
+def test_loan_annual_rate_over_cap_is_violation():
+    check = _loan_checks("借款本金 100000 元，年利率 24%。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_annual_rate_within_cap_is_ok():
+    check = _loan_checks("借款本金 100000 元，年利率 10%。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_loan_monthly_fen_over_cap_is_violation():
+    # 月息 2 分 = 2%/month = 24%/year, over the ~12% cap
+    check = _loan_checks("借款本金 50000 元，月息 2 分。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_daily_rate_over_cap_is_violation():
+    # 日息万分之五 = 0.05%/day = 18.25%/year
+    check = _loan_checks("借款 30000 元，日息万分之五。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_daily_rate_within_cap_is_ok():
+    # 日息万分之二 = 0.02%/day = 7.3%/year
+    check = _loan_checks("借款 30000 元，日息万分之二。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_loan_no_rate_clause_is_unknown():
+    check = _loan_checks("甲方出借 10000 元给乙方，借期六个月。")["cn_loan_interest_cap"]
+    assert check.status == StatuteStatus.UNKNOWN
+
+
+def test_loan_prededucted_interest_is_violation():
+    check = _loan_checks("借款 100000 元，利息预先在本金中扣除，实际交付 90000 元。")[
+        "cn_loan_no_prededucted_interest"
+    ]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_explicit_no_prededuction_is_ok():
+    check = _loan_checks("借款 100000 元，利息不预先在本金中扣除，全额支付本金。")[
+        "cn_loan_no_prededucted_interest"
+    ]
+    assert check.status == StatuteStatus.OK
+
+
+def test_loan_silent_on_prededuction_is_unknown():
+    check = _loan_checks("借款 100000 元，年利率 10%，借期一年。")[
+        "cn_loan_no_prededucted_interest"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+
+
+def test_loan_rules_do_not_fire_on_employment_text():
+    checks = run_checklist("试用期六个月，试用期工资为转正后工资的 70%。", "employment", "zh")
+    assert "cn_loan_interest_cap" not in {c.rule_id for c in checks}

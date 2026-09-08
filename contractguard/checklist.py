@@ -8,7 +8,8 @@ Rules are grouped by jurisdiction:
 
 - ``cn``: PRC labor and civil law. Probation length, probation pay,
   penalty scope, non-compete duration and compensation, overtime pay
-  floors, earnest-money ratio, lease term, social insurance.
+  floors, earnest-money ratio, lease term, social insurance, private-
+  lending rate cap, pre-deducted interest.
 - ``us-ca``: California residential leases. Security-deposit cap and
   refundability, landlord-entry notice, deposit-return deadline.
 
@@ -630,6 +631,119 @@ _EMPLOYMENT_RULES = [
     check_overtime_pay,
     check_social_insurance,
 ]
+_LPR_1Y_REF = 3.0  # 1-year LPR as of 2026-08 (3.0%); the statutory cap floats with it
+_LOAN_RATE_CAP = _LPR_1Y_REF * 4  # 民间借贷司法保护上限：合同成立时一年期 LPR 的四倍
+
+_LOAN_HINTS = ("借款", "借贷", "贷款", "出借", "loan", "lend")
+
+
+def _annualized_rate(text: str) -> tuple[float, str] | None:
+    """Parse the stated lending rate and annualize it.
+
+    Handles the shapes private-lending contracts actually use: 年利率/年化
+    X%, 月利率/月息 X% or X 分/X 厘 (1 分 = 1%/month), and 日息万分之 X.
+    Returns (annual_percent, matched_text) or None when nothing parses.
+    """
+    m = re.search(r"(?:年利率|年化利率|年息|年化)[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*%", text)
+    if m:
+        return float(m.group(1)), m.group(0)
+    m = re.search(r"(?:月利率|月息)[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*%", text)
+    if m:
+        return float(m.group(1)) * 12, m.group(0)
+    m = re.search(r"月息[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*分", text)
+    if m:
+        return float(m.group(1)) * 12, m.group(0)
+    m = re.search(r"月息[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*厘", text)
+    if m:
+        return float(m.group(1)) * 1.2, m.group(0)
+    m = re.search(r"日息[^。；;]{0,8}?万分之\s*([0-9]+(?:\.[0-9]+)?|[零一二两三四五六七八九十]+)", text)
+    if m:
+        value = _cn_int(m.group(1))
+        if value is None:
+            try:
+                value = float(m.group(1))
+            except ValueError:
+                return None
+        return value / 10000 * 365 * 100, m.group(0)
+    return None
+
+
+def check_loan_interest_cap(text: str, lang: str) -> StatuteCheck:
+    """Private-lending annual rate is enforceable only up to 4x the 1-year
+    LPR at contract signing (SPC private-lending interpretation art. 25)."""
+    basis = "最高法民间借贷司法解释第二十五条（合同成立时一年期 LPR 四倍）/ SPC private-lending interpretation, Art. 25"
+    parsed = _annualized_rate(text)
+    if not parsed:
+        return StatuteCheck(
+            rule_id="cn_loan_interest_cap",
+            title="民间借贷利率上限 / Private-lending rate cap",
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="未发现可解析的利率条款 / No parseable interest-rate clause found.",
+        )
+    rate, needle = parsed
+    cap = _LOAN_RATE_CAP
+    if rate > cap:
+        return StatuteCheck(
+            rule_id="cn_loan_interest_cap",
+            title="民间借贷利率上限 / Private-lending rate cap",
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail=f"约定年化约 {rate:.2f}%，超出司法保护上限（当前一年期 LPR 3.0% 的四倍，约 {cap:.1f}%；上限随 LPR 浮动，以签约时为准），超出部分法院不予保护 / "
+            f"The stated rate annualizes to about {rate:.2f}%, above the enforceable cap (4x the 1-year LPR, about {cap:.1f}% at the current 3.0% LPR; the cap floats with the LPR at signing). The excess is unenforceable.",
+            quote=_excerpt(text, needle),
+        )
+    return StatuteCheck(
+        rule_id="cn_loan_interest_cap",
+        title="民间借贷利率上限 / Private-lending rate cap",
+        basis=basis,
+        status=StatuteStatus.OK,
+        detail=f"约定年化约 {rate:.2f}%，未超司法保护上限（约 {cap:.1f}%，随 LPR 浮动）/ "
+        f"The stated rate annualizes to about {rate:.2f}%, within the enforceable cap (about {cap:.1f}%, floating with the LPR).",
+        quote=_excerpt(text, needle),
+    )
+
+
+_PREDEDUCT_BAD = re.compile(r"(?:预先|提前|事先)在本金中扣除|砍头息|利息.{0,6}(?:预先|提前)扣除|(?:预先|提前)扣除.{0,6}利息")
+_PREDEDUCT_OK = re.compile(r"利息不(?:得|会|可)?预先|不预先在本金中扣除|全额(?:支付|交付|出借)本金")
+
+
+def check_loan_prededucted_interest(text: str, lang: str) -> StatuteCheck:
+    """Interest must not be deducted from the principal up front; when it is,
+    the principal is the amount actually delivered (Civil Code art. 670)."""
+    basis = "《民法典》第六百七十条 / PRC Civil Code, Art. 670"
+    ok_m = _PREDEDUCT_OK.search(text)
+    if ok_m:
+        return StatuteCheck(
+            rule_id="cn_loan_no_prededucted_interest",
+            title="禁止预扣利息 / No pre-deducted interest",
+            basis=basis,
+            status=StatuteStatus.OK,
+            detail="合同明确利息不预扣或本金全额交付 / The contract states interest is not pre-deducted or the principal is delivered in full.",
+            quote=_excerpt(text, ok_m.group(0)),
+        )
+    bad_m = _PREDEDUCT_BAD.search(text)
+    if bad_m:
+        return StatuteCheck(
+            rule_id="cn_loan_no_prededucted_interest",
+            title="禁止预扣利息 / No pre-deducted interest",
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail="存在从本金中预扣利息的安排（砍头息）；本金应按实际出借金额认定 / "
+            "Interest is deducted from the principal up front; the principal must be the amount actually delivered.",
+            quote=_excerpt(text, bad_m.group(0)),
+        )
+    return StatuteCheck(
+        rule_id="cn_loan_no_prededucted_interest",
+        title="禁止预扣利息 / No pre-deducted interest",
+        basis=basis,
+        status=StatuteStatus.UNKNOWN,
+        detail="未发现预扣或明确不预扣的表述 / No pre-deduction clause found, and no explicit no-prededuction statement either.",
+    )
+
+
+_LOAN_RULES = [check_loan_interest_cap, check_loan_prededucted_interest]
+
 _LEASE_RULES = [check_earnest_money, check_lease_term]
 _CA_LEASE_RULES = us_ca.RULES
 
@@ -701,12 +815,17 @@ def run_checklist(
     lease = contract_type == "lease" or (
         contract_type == "unknown" and any(h in text_l or h in contract_text for h in _LEASE_HINTS)
     )
+    loan = contract_type == "loan" or (
+        contract_type == "unknown" and any(h in text_l or h in contract_text for h in _LOAN_HINTS)
+    )
     checks: list[StatuteCheck] = []
     if resolved in ("cn", "unknown"):
         if employment:
             checks.extend(rule(contract_text, lang) for rule in _EMPLOYMENT_RULES)
         if lease:
             checks.extend(rule(contract_text, lang) for rule in _LEASE_RULES)
+        if loan:
+            checks.extend(rule(contract_text, lang) for rule in _LOAN_RULES)
     elif lease:
         checks.extend(rule(contract_text, lang) for rule in _CA_LEASE_RULES)
     if jurisdiction == "auto" and resolved == "unknown":

@@ -26,6 +26,9 @@ RULE_REFERENCES: dict[str, str] = {
     "cn_training_penalty_cap": GOV_GAZETTE_LCL,
     "cn_earnest_money_cap": GOV_CIVIL_CODE,
     "cn_lease_term_cap": GOV_CIVIL_CODE,
+    "cn_loan_no_prededucted_interest": GOV_CIVIL_CODE,
+    # 民间借贷司法解释无稳定 gov.cn 全文页；国家法律法规数据库可检索现行文本
+    "cn_loan_interest_cap": FLK_HOME,
     # no stable gov.cn full-text page for the Labour Law; the national
     # database front page searches the current consolidated text
     "cn_overtime_pay_floor": FLK_HOME,
@@ -130,6 +133,27 @@ STATUTE_AUDIT: dict[str, StatuteAudit] = {
         rule_id="cn_lease_term_cap",
         excerpt=("《民法典》第七百零五条：租赁期限不得超过二十年，超过部分无效。"),
         checked_points=("lease term ≤ 20 years",),
+    ),
+    "cn_loan_interest_cap": StatuteAudit(
+        rule_id="cn_loan_interest_cap",
+        excerpt=(
+            "最高法《关于审理民间借贷案件适用法律若干问题的规定》第二十五条："
+            "出借人请求按约定利率支付利息的，法院支持的利率以合同成立时一年期"
+            "贷款市场报价利率四倍为限。当前一年期 LPR 为 3.0%（2026-08 报价），"
+            "对应上限约 12.0%；该值随 LPR 浮动。"
+        ),
+        checked_points=(
+            "annualized rate ≤ 4x the 1-year LPR at signing",
+            "reference LPR 3.0% (2026-08) -> cap 12.0%",
+        ),
+    ),
+    "cn_loan_no_prededucted_interest": StatuteAudit(
+        rule_id="cn_loan_no_prededucted_interest",
+        excerpt=(
+            "《民法典》第六百七十条：借款的利息不得预先在本金中扣除；"
+            "预先扣除的，按照实际借款数额返还借款并计算利息。"
+        ),
+        checked_points=("no interest pre-deducted from principal",),
     ),
     "cn_overtime_pay_floor": StatuteAudit(
         rule_id="cn_overtime_pay_floor",
