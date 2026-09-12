@@ -11,6 +11,7 @@ from rich.text import Text
 
 from contractguard.batch import BatchItem, summarize_batch
 from contractguard.compare import ContractComparison
+from contractguard.disclaimers import DISCLAIMER, SCOPE_NOTE
 from contractguard.models import AnalysisResult, Issue, Protection, Severity, StatuteCheck
 from contractguard.references import reference_for
 
@@ -270,6 +271,9 @@ def generate_markdown_report(result: AnalysisResult, lang: str = "en") -> str:
         lines.extend(["", "## Missing Protections", ""])
         for item in result.missing_protections:
             lines.append(f"- {item}")
+
+    lang_key = "zh" if lang == "zh" else "en"
+    lines.extend(["", "---", "", DISCLAIMER[lang_key], "", SCOPE_NOTE[lang_key]])
 
     return "\n".join(lines)
 

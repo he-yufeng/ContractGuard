@@ -8,6 +8,7 @@ import tempfile
 import gradio as gr
 
 from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
+from contractguard.disclaimers import HOME_MD_EN, HOME_MD_ZH
 from contractguard.checklist import run_checklist
 from contractguard.html import generate_html_report, write_pdf_report
 from contractguard.models import StatuteCheck
@@ -149,12 +150,7 @@ def _analyze(file, model: str, api_key: str, lang: str = "en"):
 
 def create_app() -> gr.Blocks:
     with gr.Blocks(title="ContractGuard") as app:
-        gr.Markdown(
-            "# ContractGuard\n\n"
-            "Upload a contract and get an instant AI review with red flags, "
-            "warnings, protections, statute checks, and a fairness score.\n\n"
-            "*Not legal advice. Use as a first-pass filter before consulting a lawyer.*"
-        )
+        gr.Markdown(HOME_MD_EN + "\n\n---\n\n" + HOME_MD_ZH)
 
         with gr.Row():
             with gr.Column(scale=1, min_width=280):
