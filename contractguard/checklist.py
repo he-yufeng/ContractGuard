@@ -30,8 +30,20 @@ from contractguard import us_ca
 from contractguard.models import StatuteCheck, StatuteStatus
 
 _CN_NUM = {
-    "零": 0, "一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
-    "六": 6, "七": 7, "八": 8, "九": 9, "十": 10, "十一": 11, "十二": 12,
+    "零": 0,
+    "一": 1,
+    "二": 2,
+    "两": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+    "十一": 11,
+    "十二": 12,
 }
 
 
@@ -217,9 +229,7 @@ def check_noncompete(text: str, lang: str) -> StatuteCheck:
             status=StatuteStatus.UNKNOWN,
             detail="未发现竞业限制条款 / No non-compete clause found.",
         )
-    years, years_quote = _search_number(
-        [r"竞业[限禁]制[^。；;]{0,20}?([0-9]+|[一二两三四五六七八九十]+)\s*年"], text
-    )
+    years, years_quote = _search_number([r"竞业[限禁]制[^。；;]{0,20}?([0-9]+|[一二两三四五六七八九十]+)\s*年"], text)
     months, months_quote = _search_number(
         [
             r"竞业[限禁]制[^。；;]{0,20}?([0-9]+|[一二两三四五六七八九十]+)\s*个?月",
@@ -229,9 +239,7 @@ def check_noncompete(text: str, lang: str) -> StatuteCheck:
     )
     term_months = years * 12 if years is not None else months
     quote = _excerpt(text, years_quote or months_quote or anchor.group(0))
-    has_compensation = bool(
-        re.search(r"竞业[限禁][^。]{0,80}?补偿|补偿[^。]{0,40}竞业|每月补偿|经济补偿", text)
-    )
+    has_compensation = bool(re.search(r"竞业[限禁][^。]{0,80}?补偿|补偿[^。]{0,40}竞业|每月补偿|经济补偿", text))
     if term_months is not None and term_months > 24:
         return StatuteCheck(
             rule_id="cn_noncompete_term_and_compensation",
@@ -487,8 +495,7 @@ def check_lease_term(text: str, lang: str) -> StatuteCheck:
         title="租赁期限上限 / Lease-term cap",
         basis=basis,
         status=StatuteStatus.OK,
-        detail=f"租赁期限 {years} 年在 20 年上限之内 / "
-        f"Lease term of {years} years is within the 20-year cap.",
+        detail=f"租赁期限 {years} 年在 20 年上限之内 / Lease term of {years} years is within the 20-year cap.",
         quote=_excerpt(text, years_quote),
     )
 
@@ -505,13 +512,22 @@ _OVERTIME_PAY_PCT = [
     r"[Oo]vertime[^.]{0,40}?([0-9]+)\s*%",
 ]
 _OVERTIME_WAIVER = [
-    "自愿放弃加班费", "放弃加班工资", "不再另行支付加班费",
-    "不再支付加班工资", "无需支付加班费", "不支付加班费",
-    "waive any overtime pay", "no overtime pay",
+    "自愿放弃加班费",
+    "放弃加班工资",
+    "不再另行支付加班费",
+    "不再支付加班工资",
+    "无需支付加班费",
+    "不支付加班费",
+    "waive any overtime pay",
+    "no overtime pay",
 ]
 _OVERTIME_BUNDLED = [
-    "工资已包含加班", "薪资已包含加班", "包薪", "工资中已含加班",
-    "salary already includes overtime", "overtime is included in the salary",
+    "工资已包含加班",
+    "薪资已包含加班",
+    "包薪",
+    "工资中已含加班",
+    "salary already includes overtime",
+    "overtime is included in the salary",
 ]
 
 
@@ -580,19 +596,26 @@ def check_overtime_pay(text: str, lang: str) -> StatuteCheck:
         title=title,
         basis=basis,
         status=StatuteStatus.OK,
-        detail=f"加班费率 {rate}% 达到下限 {floor}% / "
-        f"Overtime rate of {rate}% meets the {floor}% floor.",
+        detail=f"加班费率 {rate}% 达到下限 {floor}% / Overtime rate of {rate}% meets the {floor}% floor.",
         quote=context,
     )
 
 
-
 _SOCIAL_WAIVER = [
-    "自愿放弃社保", "自愿放弃缴纳社保", "自愿放弃社会保险",
-    "放弃社保", "放弃缴纳社会保险", "不再缴纳社会保险",
-    "不缴纳社会保险", "不予缴纳社保", "无需缴纳社保",
-    "社保补贴代替缴纳", "社保补贴替代", "以补贴形式代替社保",
-    "waive social insurance", "social insurance subsidy in lieu",
+    "自愿放弃社保",
+    "自愿放弃缴纳社保",
+    "自愿放弃社会保险",
+    "放弃社保",
+    "放弃缴纳社会保险",
+    "不再缴纳社会保险",
+    "不缴纳社会保险",
+    "不予缴纳社保",
+    "无需缴纳社保",
+    "社保补贴代替缴纳",
+    "社保补贴替代",
+    "以补贴形式代替社保",
+    "waive social insurance",
+    "social insurance subsidy in lieu",
 ]
 
 
@@ -689,8 +712,11 @@ def check_loan_interest_cap(text: str, lang: str) -> StatuteCheck:
             title="民间借贷利率上限 / Private-lending rate cap",
             basis=basis,
             status=StatuteStatus.VIOLATION,
-            detail=f"约定年化约 {rate:.2f}%，超出司法保护上限（当前一年期 LPR 3.0% 的四倍，约 {cap:.1f}%；上限随 LPR 浮动，以签约时为准），超出部分法院不予保护 / "
-            f"The stated rate annualizes to about {rate:.2f}%, above the enforceable cap (4x the 1-year LPR, about {cap:.1f}% at the current 3.0% LPR; the cap floats with the LPR at signing). The excess is unenforceable.",
+            detail=f"约定年化约 {rate:.2f}%，超出司法保护上限（当前一年期 LPR 3.0% 的四倍，约 {cap:.1f}%；"
+            f"上限随 LPR 浮动，以签约时为准），超出部分法院不予保护 / "
+            f"The stated rate annualizes to about {rate:.2f}%, above the enforceable cap "
+            f"(4x the 1-year LPR, about {cap:.1f}% at the current 3.0% LPR; the cap floats "
+            f"with the LPR at signing). The excess is unenforceable.",
             quote=_excerpt(text, needle),
         )
     return StatuteCheck(
@@ -699,12 +725,16 @@ def check_loan_interest_cap(text: str, lang: str) -> StatuteCheck:
         basis=basis,
         status=StatuteStatus.OK,
         detail=f"约定年化约 {rate:.2f}%，未超司法保护上限（约 {cap:.1f}%，随 LPR 浮动）/ "
-        f"The stated rate annualizes to about {rate:.2f}%, within the enforceable cap (about {cap:.1f}%, floating with the LPR).",
+        f"The stated rate annualizes to about {rate:.2f}%, within the enforceable cap "
+        f"(about {cap:.1f}%, floating with the LPR).",
         quote=_excerpt(text, needle),
     )
 
 
-_PREDEDUCT_BAD = re.compile(r"(?:预先|提前|事先)在本金中扣除|砍头息|利息.{0,6}(?:预先|提前)扣除|(?:预先|提前)扣除.{0,6}利息")
+_PREDEDUCT_BAD = re.compile(
+    r"(?:预先|提前|事先)在本金中扣除|砍头息|利息.{0,6}(?:预先|提前)扣除|"
+    r"(?:预先|提前)扣除.{0,6}利息"
+)
 _PREDEDUCT_OK = re.compile(r"利息不(?:得|会|可)?预先|不预先在本金中扣除|全额(?:支付|交付|出借)本金")
 
 
@@ -719,7 +749,8 @@ def check_loan_prededucted_interest(text: str, lang: str) -> StatuteCheck:
             title="禁止预扣利息 / No pre-deducted interest",
             basis=basis,
             status=StatuteStatus.OK,
-            detail="合同明确利息不预扣或本金全额交付 / The contract states interest is not pre-deducted or the principal is delivered in full.",
+            detail="合同明确利息不预扣或本金全额交付 / The contract states interest is not "
+            "pre-deducted or the principal is delivered in full.",
             quote=_excerpt(text, ok_m.group(0)),
         )
     bad_m = _PREDEDUCT_BAD.search(text)
@@ -738,7 +769,8 @@ def check_loan_prededucted_interest(text: str, lang: str) -> StatuteCheck:
         title="禁止预扣利息 / No pre-deducted interest",
         basis=basis,
         status=StatuteStatus.UNKNOWN,
-        detail="未发现预扣或明确不预扣的表述 / No pre-deduction clause found, and no explicit no-prededuction statement either.",
+        detail="未发现预扣或明确不预扣的表述 / No pre-deduction clause found, "
+        "and no explicit no-prededuction statement either.",
     )
 
 

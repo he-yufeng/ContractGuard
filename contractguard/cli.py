@@ -29,7 +29,8 @@ def main():
 @click.option("--model", "-m", default=None, help="LLM model to use (default: anthropic/claude-sonnet-4)")
 @click.option("--api-key", "-k", envvar="OPENROUTER_API_KEY", help="API key (or set OPENROUTER_API_KEY)")
 @click.option("--base-url", "-u", envvar="OPENROUTER_BASE_URL", help="API base URL")
-@click.option("--output", "-o", type=click.Path(), help="Save report to file (.html writes self-contained HTML)")
+@click.option("--output", "-o", type=click.Path(),
+              help="Save report to file (.html writes self-contained HTML, .pdf a clean PDF)")
 @click.option("--json", "json_output", is_flag=True, help="Output raw JSON instead of formatted report")
 @click.option("--lang", "-l", type=click.Choice(["en", "zh"]), default="en", help="Analysis language (en or zh)")
 @click.option("--jurisdiction", "-j", type=click.Choice(["auto", "cn", "us-ca"]), default="auto",
@@ -221,7 +222,7 @@ def web():
 
 
 def _write_report(result, output: str, json_output: bool = False, lang: str = "en") -> None:
-    from contractguard.html import generate_html_report
+    from contractguard.html import generate_html_report, write_pdf_report
     from contractguard.report import generate_markdown_report
 
     if json_output:
@@ -232,4 +233,11 @@ def _write_report(result, output: str, json_output: bool = False, lang: str = "e
         content = generate_markdown_report(result, lang)
     output_path = Path(output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    if not json_output and output.lower().endswith(".pdf"):
+        # PDF is binary: render through the pdf pipeline instead of writing text.
+        if write_pdf_report(result, lang, str(output_path)) is None:
+            raise click.ClickException(
+                "PDF export needs reportlab (bundled by default) or the pdf extra."
+            )
+        return
     output_path.write_text(content, encoding="utf-8")

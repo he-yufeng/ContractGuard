@@ -107,8 +107,9 @@ contractguard scan lease.pdf
 # 指定任意 OpenRouter / OpenAI / Ollama 模型
 contractguard scan contract.pdf --model openai/gpt-4o
 
-# 导出 Markdown 报告，或结构化 JSON 供脚本使用
+# 导出 Markdown 报告、排版干净的 PDF，或结构化 JSON 供脚本使用
 contractguard scan contract.pdf --output report.md
+contractguard scan contract.pdf --output report.pdf
 contractguard scan contract.pdf --json --output report.json
 
 # 扫描整个文件夹，或对比两个版本的合同
@@ -213,7 +214,7 @@ ContractGuard 使用 OpenAI 兼容 API 格式，几乎支持所有 LLM 服务商
 
 ## 路线图
 
-**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`，LLM 分析和确定性法条核查面板同屏展示）。
+**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`，LLM 分析和确定性法条核查面板同屏展示）。报告可导出排版干净的 PDF（含法条引用、官方链接和风险等级）：`--output report.pdf` 或 Web 端下载按钮；装了 weasyprint 系统库就走高保真渲染，没装也有内置纯 Python 渲染器兜底，任何机器都能导出。
 
 **规划中**：
 

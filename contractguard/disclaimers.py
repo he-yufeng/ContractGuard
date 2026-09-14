@@ -7,12 +7,14 @@ makes the rest of the output trustworthy.
 """
 
 DISCLAIMER = {
-    "en": "ContractGuard is not legal advice. It flags patterns worth a second look; a qualified lawyer makes the call.",
+    "en": "ContractGuard is not legal advice. It flags patterns worth a second look; "
+    "a qualified lawyer makes the call.",
     "zh": "ContractGuard 不构成法律意见。它标出值得多看一眼的风险点，最终判断请咨询专业律师。",
 }
 
 SCOPE_NOTE = {
-    "en": "Audited scope today: California residential leases and PRC employment/labor contracts. Other jurisdictions are not verified yet.",
+    "en": "Audited scope today: California residential leases and PRC employment/labor "
+    "contracts. Other jurisdictions are not verified yet.",
     "zh": "当前核查范围：加州住宅租赁与中国劳动/劳务合同。其他法域暂未核验，结果仅供参考。",
 }
 

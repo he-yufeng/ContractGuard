@@ -9,8 +9,14 @@ from contractguard.models import AnalysisResult, Issue, Protection, StatuteCheck
 from contractguard.references import reference_for
 
 _GRADE_HEX = {
-    "A+": "#16a34a", "A": "#16a34a", "B+": "#4d7c0f", "B": "#ca8a04",
-    "C+": "#ca8a04", "C": "#ea580c", "D": "#dc2626", "F": "#b91c1c",
+    "A+": "#16a34a",
+    "A": "#16a34a",
+    "B+": "#4d7c0f",
+    "B": "#ca8a04",
+    "C+": "#ca8a04",
+    "C": "#ea580c",
+    "D": "#dc2626",
+    "F": "#b91c1c",
 }
 
 _CSS = """
@@ -60,7 +66,8 @@ def _issue_card(issue: Issue, kind: str, lang: str = "en") -> str:
     redline_label = "建议改写：" if lang == "zh" else "Suggested rewrite:"
     redline = (
         f'<div class="redline"><span class="label">{redline_label}</span> {_esc(issue.redline)}</div>'
-        if issue.redline else ""
+        if issue.redline
+        else ""
     )
     return f"""
     <div class="card {kind}">
@@ -117,15 +124,15 @@ def generate_html_report(result: AnalysisResult, lang: str = "en") -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ContractGuard Report — {_esc(result.contract_type.value.replace('_', ' ').title())}</title>
+<title>ContractGuard Report — {_esc(result.contract_type.value.replace("_", " ").title())}</title>
 <style>{_CSS}</style>
 </head>
 <body>
 <div class="page">
   <div class="header">
     <h1>ContractGuard Analysis Report</h1>
-    <div class="meta">Contract type: {_esc(result.contract_type.value.replace('_', ' ').title())}</div>
-    <div class="meta">Parties: {_esc(', '.join(result.parties) or '—')}</div>
+    <div class="meta">Contract type: {_esc(result.contract_type.value.replace("_", " ").title())}</div>
+    <div class="meta">Parties: {_esc(", ".join(result.parties) or "—")}</div>
     <div class="grade" style="background:{grade_color}">{_esc(result.fairness_grade)} · {score}/100</div>
     <div class="scorebar"><div class="scorefill" style="width:{score}%;background:{grade_color}"></div></div>
   </div>
@@ -152,16 +159,28 @@ def generate_html_report(result: AnalysisResult, lang: str = "en") -> str:
 
 
 def write_pdf_report(result: AnalysisResult, lang: str = "en", path: str | None = None) -> str | None:
-    """PDF next to the HTML report, when the optional weasyprint extra is installed."""
+    """PDF next to the HTML report.
+
+    Prefers weasyprint (full HTML fidelity) when the pdf extra is installed;
+    otherwise falls back to the pure-python reportlab renderer so the export
+    works on hosts without cairo/pango. Returns None only when neither
+    backend is available.
+    """
     try:
         from weasyprint import HTML
     except ImportError:
-        return None  # pdf extra not installed; the HTML report still works
+        HTML = None
     if path is None:
         import os
         import tempfile
 
         fd, path = tempfile.mkstemp(prefix="contractguard-", suffix=".pdf")
         os.close(fd)
-    HTML(string=generate_html_report(result, lang)).write_pdf(path)
-    return path
+    if HTML is not None:
+        HTML(string=generate_html_report(result, lang)).write_pdf(path)
+        return path
+    try:
+        from contractguard.pdf import render_pdf_report
+    except ImportError:
+        return None
+    return render_pdf_report(result, lang, path)

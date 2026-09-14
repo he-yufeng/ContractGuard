@@ -110,8 +110,9 @@ contractguard scan lease.pdf
 # Pick any OpenRouter / OpenAI / Ollama model
 contractguard scan contract.pdf --model openai/gpt-4o
 
-# Export a markdown report, or structured JSON for scripting
+# Export a markdown report, a clean PDF, or structured JSON for scripting
 contractguard scan contract.pdf --output report.md
+contractguard scan contract.pdf --output report.pdf
 contractguard scan contract.pdf --json --output report.json
 
 # Scan a whole folder, or diff two versions of a contract
@@ -216,7 +217,7 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel.
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel. Reports export to a clean PDF — statute citations with official links and risk levels included — via `--output report.pdf` or the web download button; weasyprint renders when its system libraries exist, and the bundled pure-python fallback covers hosts where they do not.
 
 **Planned:**
 

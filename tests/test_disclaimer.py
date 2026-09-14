@@ -5,11 +5,10 @@ leases, PRC labor contracts) must be on the home page and on report footers,
 in both languages.
 """
 
-from contractguard.disclaimers import DISCLAIMER, SCOPE_NOTE
+from contractguard.disclaimers import DISCLAIMER, HOME_MD_EN, HOME_MD_ZH, SCOPE_NOTE
 from contractguard.html import generate_html_report
 from contractguard.models import AnalysisResult, ContractType
 from contractguard.report import generate_markdown_report
-from contractguard.disclaimers import HOME_MD_EN, HOME_MD_ZH
 
 
 def _result() -> AnalysisResult:

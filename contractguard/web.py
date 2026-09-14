@@ -8,8 +8,8 @@ import tempfile
 import gradio as gr
 
 from contractguard.analyzer import DEFAULT_MODEL, analyze_contract
-from contractguard.disclaimers import HOME_MD_EN, HOME_MD_ZH
 from contractguard.checklist import run_checklist
+from contractguard.disclaimers import HOME_MD_EN, HOME_MD_ZH
 from contractguard.html import generate_html_report, write_pdf_report
 from contractguard.models import StatuteCheck
 from contractguard.parser import extract_text

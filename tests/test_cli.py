@@ -60,3 +60,17 @@ def test_write_report_creates_parent_directories(tmp_path):
     _write_report(_sample_result(), str(output))
 
     assert output.exists()
+
+
+def test_write_report_pdf_suffix_writes_a_real_pdf(tmp_path):
+    output = tmp_path / "report.pdf"
+
+    _write_report(_sample_result(), str(output))
+
+    assert output.read_bytes()[:5] == b"%PDF-"
+    import pdfplumber
+
+    with pdfplumber.open(str(output)) as pdf:
+        text = "\n".join(page.extract_text() or "" for page in pdf.pages)
+    assert "ContractGuard Analysis Report" in text
+    assert "Non-refundable deposit" in text
