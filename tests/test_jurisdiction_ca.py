@@ -216,3 +216,24 @@ def test_cli_scan_and_batch_forward_jurisdiction(tmp_path, monkeypatch):
     assert result.exit_code == 0
     assert seen == ["us-ca", "us-ca"]
     assert "## Statute Checks" in (out_dir / "c.md").read_text(encoding="utf-8")
+
+
+def test_section_header_does_not_shadow_deposit_amount():
+    # a bare "3. SECURITY DEPOSIT." header must not win over the content
+    # sentence that carries the actual amount (caught by the release corpus)
+    text = (
+        "2. RENT. Monthly rent shall be $3,200.00, due on the first day of each month.\n"
+        "3. SECURITY DEPOSIT. Tenant shall pay a security deposit of $6,400.00 before taking possession."
+    )
+    check = _checks(text)["us_ca_security_deposit_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "$6,400.00" in check.detail
+
+
+def test_section_header_keeps_within_cap_verdict():
+    text = (
+        "2. RENT. Monthly rent shall be $3,200.00, due on the first day of each month.\n"
+        "3. SECURITY DEPOSIT. Tenant shall pay a security deposit of $3,200.00 before move-in."
+    )
+    check = _checks(text)["us_ca_security_deposit_cap"]
+    assert check.status == StatuteStatus.OK

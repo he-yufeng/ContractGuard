@@ -55,7 +55,14 @@ def check_ca_security_deposit_cap(text: str, lang: str) -> StatuteCheck:
     title = "Security deposit cap"
     basis = "California Civil Code §1950.5, as amended by AB 12 (effective 2024-07-01)"
     sentences = _sentences(text)
-    deposit_s = _first_sentence(sentences, "security deposit") or _first_sentence(sentences, "deposit")
+    # A bare section header ("3. SECURITY DEPOSIT.") shadows the content
+    # sentence that carries the amount, so prefer the deposit sentence that
+    # also has a dollar figure before falling back to any mention.
+    deposit_s = (
+        _first_sentence(sentences, "security deposit", "$")
+        or _first_sentence(sentences, "security deposit")
+        or _first_sentence(sentences, "deposit")
+    )
     rent_s = _first_sentence(sentences, "monthly rent") or _first_sentence(sentences, "rent", "$", skip="deposit")
     deposit, deposit_raw = _usd(deposit_s) if deposit_s else (None, None)
     rent, rent_raw = _usd(rent_s) if rent_s else (None, None)

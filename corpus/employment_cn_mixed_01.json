@@ -1,0 +1,13 @@
+{
+  "contract_type": "employment",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "三年期合同：试用期超上限且试用期工资低于八成；竞业限制和培训违约条款合规",
+  "expect": {
+    "cn_probation_duration_cap": "VIOLATION",
+    "cn_probation_wage_floor": "VIOLATION",
+    "cn_noncompete_term_and_compensation": "OK",
+    "cn_penalty_scope_limit": "OK",
+    "cn_training_penalty_cap": "UNKNOWN"
+  }
+}

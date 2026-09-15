@@ -1,0 +1,13 @@
+{
+  "contract_type": "employment",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "劳动者敌对样本：试用期超长、工资六成、三年无补偿竞业限制、离职一律违约金五万——四档全违规",
+  "expect": {
+    "cn_probation_duration_cap": "VIOLATION",
+    "cn_probation_wage_floor": "VIOLATION",
+    "cn_noncompete_term_and_compensation": "VIOLATION",
+    "cn_penalty_scope_limit": "VIOLATION",
+    "cn_training_penalty_cap": "UNKNOWN"
+  }
+}

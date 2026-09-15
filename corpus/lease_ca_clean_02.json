@@ -1,0 +1,12 @@
+{
+  "contract_type": "lease",
+  "lang": "en",
+  "jurisdiction": "us-ca",
+  "note": "fully compliant control: one-month deposit, 24-hour notice, 21-day itemized return, refundable deposit",
+  "expect": {
+    "us_ca_security_deposit_cap": "OK",
+    "us_ca_deposit_refundability": "OK",
+    "us_ca_entry_notice": "OK",
+    "us_ca_deposit_return_deadline": "OK"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "contract_type": "lease",
+  "lang": "en",
+  "jurisdiction": "us-ca",
+  "note": "tenant-hostile sample: two months' rent deposit, non-refundable, 12-hour entry notice, 45-day return",
+  "expect": {
+    "us_ca_security_deposit_cap": "VIOLATION",
+    "us_ca_deposit_refundability": "VIOLATION",
+    "us_ca_entry_notice": "VIOLATION",
+    "us_ca_deposit_return_deadline": "VIOLATION"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "contract_type": "lease",
+  "lang": "en",
+  "jurisdiction": "us-ca",
+  "note": "deposit twice the cap and free-entry clause are violations; refund deadline and refundability are compliant",
+  "expect": {
+    "us_ca_security_deposit_cap": "VIOLATION",
+    "us_ca_deposit_refundability": "OK",
+    "us_ca_entry_notice": "VIOLATION",
+    "us_ca_deposit_return_deadline": "OK"
+  }
+}

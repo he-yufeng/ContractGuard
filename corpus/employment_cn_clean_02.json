@@ -1,0 +1,13 @@
+{
+  "contract_type": "employment",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "全合规对照样本：试用期六个月八成工资、无竞业限制、无违约条款——任何 VIOLATION 都是误报",
+  "expect": {
+    "cn_probation_duration_cap": "OK",
+    "cn_probation_wage_floor": "OK",
+    "cn_noncompete_term_and_compensation": "UNKNOWN",
+    "cn_penalty_scope_limit": "UNKNOWN",
+    "cn_training_penalty_cap": "UNKNOWN"
+  }
+}
