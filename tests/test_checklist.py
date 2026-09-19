@@ -362,3 +362,37 @@ def test_loan_silent_on_prededuction_is_unknown():
 def test_loan_rules_do_not_fire_on_employment_text():
     checks = run_checklist("试用期六个月，试用期工资为转正后工资的 70%。", "employment", "zh")
     assert "cn_loan_interest_cap" not in {c.rule_id for c in checks}
+
+
+def test_noncompete_severance_compensation_does_not_count():
+    # LCL 46/47 severance wording in a separate sentence must not satisfy the
+    # non-compete compensation requirement — it used to report OK.
+    text = "竞业限制期限两年，乙方离职后不得入职同行业竞争企业。合同解除时，甲方应当向乙方支付经济补偿。"
+    check = _checks(text)["cn_noncompete_term_and_compensation"]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_noncompete_split_compensation_sentence_still_counts():
+    text = "竞业限制期限为两年。甲方应按月支付竞业补偿金 3000 元。"
+    check = _checks(text)["cn_noncompete_term_and_compensation"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_earnest_money_wan_format_over_cap_is_violation():
+    text = "合同总金额 10 万元，承租方支付定金 5 万元。"
+    check = _checks(text, "lease")["cn_earnest_money_cap"]
+    assert check.status == StatuteStatus.VIOLATION
+    assert "50,000" in check.detail
+
+
+def test_earnest_money_wan_format_within_cap_is_ok():
+    text = "合同总金额 10 万元，承租方支付定金 1.5 万元。"
+    check = _checks(text, "lease")["cn_earnest_money_cap"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_earnest_money_wan_rent_total_derivation():
+    text = "月租金 1.2 万元，租赁期限一年，承租方支付定金 4 万元。"
+    check = _checks(text, "lease")["cn_earnest_money_cap"]
+    # 12000*12 = 144000, 20% cap 28800 < 40000
+    assert check.status == StatuteStatus.VIOLATION

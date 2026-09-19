@@ -1,0 +1,13 @@
+{
+  "contract_type": "employment",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "两年无补偿竞业限制+第四条标准遣散费表述：遣散口径的“经济补偿”不得满足竞业补偿要求，曾误报 OK",
+  "expect": {
+    "cn_probation_duration_cap": "OK",
+    "cn_probation_wage_floor": "OK",
+    "cn_noncompete_term_and_compensation": "VIOLATION",
+    "cn_penalty_scope_limit": "UNKNOWN",
+    "cn_training_penalty_cap": "UNKNOWN"
+  }
+}

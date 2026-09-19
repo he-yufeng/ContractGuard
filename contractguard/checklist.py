@@ -239,7 +239,15 @@ def check_noncompete(text: str, lang: str) -> StatuteCheck:
     )
     term_months = years * 12 if years is not None else months
     quote = _excerpt(text, years_quote or months_quote or anchor.group(0))
-    has_compensation = bool(re.search(r"竞业[限禁][^。]{0,80}?补偿|补偿[^。]{0,40}竞业|每月补偿|经济补偿", text))
+    # Compensation must be tied to the non-compete clause itself. A bare
+    # 经济补偿 anywhere in the contract is the LCL 46/47 severance term,
+    # not non-compete compensation — reading it as one used to report
+    # illegal no-compensation clauses as OK. Require the two to share a
+    # sentence; split clauses ("…竞业补偿金。") still match.
+    sentences = re.split(r"(?<=[。；;.!？?])\s*", text)
+    has_compensation = any(
+        "补偿" in s for s in sentences if re.search(r"竞业|同业竞争|[Nn]on-?compete", s)
+    )
     if term_months is not None and term_months > 24:
         return StatuteCheck(
             rule_id="cn_noncompete_term_and_compensation",
@@ -409,7 +417,7 @@ def check_earnest_money(text: str, lang: str) -> StatuteCheck:
     """Earnest money (定金) must not exceed 20% of the contract value
     (Civil Code art. 586)."""
     basis = "《民法典》第五百八十六条 / PRC Civil Code, Art. 586"
-    deposit_m = re.search(r"定金[^。；;]{0,12}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(?:元|块)", text)
+    deposit_m = re.search(r"定金[^。；;]{0,12}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*(?:元|块)", text)
     if not deposit_m:
         return StatuteCheck(
             rule_id="cn_earnest_money_cap",
@@ -419,15 +427,15 @@ def check_earnest_money(text: str, lang: str) -> StatuteCheck:
             detail="未发现明确定金金额（押金不在本条约束范围）/ "
             "No explicit earnest-money amount found (ordinary deposits are outside this rule).",
         )
-    deposit = float(deposit_m.group(1).replace(",", ""))
-    total_m = re.search(r"(?:合同总金额|合同总额|租金总额)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*元", text)
+    deposit = float(deposit_m.group(1).replace(",", "")) * (10000 if deposit_m.group(2) else 1)
+    total_m = re.search(r"(?:合同总金额|合同总额|租金总额)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*元", text)
     if not total_m:
-        rent_m = re.search(r"(?:月租金|租金)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*元", text)
+        rent_m = re.search(r"(?:月租金|租金)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*元", text)
         months, _ = _search_number(_CONTRACT_MONTHS_ONLY, text)
         years, _ = _search_number(_CONTRACT_YEARS, text)
         term = years * 12 if years is not None else months
         if rent_m and term:
-            total = float(rent_m.group(1).replace(",", "")) * term
+            total = float(rent_m.group(1).replace(",", "")) * (10000 if rent_m.group(2) else 1) * term
         else:
             return StatuteCheck(
                 rule_id="cn_earnest_money_cap",
@@ -439,7 +447,7 @@ def check_earnest_money(text: str, lang: str) -> StatuteCheck:
                 quote=_excerpt(text, deposit_m.group(0)),
             )
     else:
-        total = float(total_m.group(1).replace(",", ""))
+        total = float(total_m.group(1).replace(",", "")) * (10000 if total_m.group(2) else 1)
     cap = total * 0.2
     if deposit > cap:
         return StatuteCheck(
