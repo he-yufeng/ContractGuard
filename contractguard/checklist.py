@@ -428,7 +428,11 @@ def check_earnest_money(text: str, lang: str) -> StatuteCheck:
             "No explicit earnest-money amount found (ordinary deposits are outside this rule).",
         )
     deposit = float(deposit_m.group(1).replace(",", "")) * (10000 if deposit_m.group(2) else 1)
-    total_m = re.search(r"(?:合同总金额|合同总额|租金总额)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*元", text)
+    total_m = re.search(
+        r"(?:合同总金额|合同总额|租金总额)"
+        r"[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*元",
+        text,
+    )
     if not total_m:
         rent_m = re.search(r"(?:月租金|租金)[^。；;]{0,10}?([0-9][0-9,]*(?:\.[0-9]+)?)\s*(万)?\s*元", text)
         months, _ = _search_number(_CONTRACT_MONTHS_ONLY, text)
