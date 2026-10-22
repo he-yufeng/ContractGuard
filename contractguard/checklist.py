@@ -980,7 +980,10 @@ def check_freelance_ip_scope(text: str, lang: str) -> StatuteCheck:
     """Commissioned-work copyright defaults to the contractor (Copyright Law
     art. 17). Attribution right (署名权) is a moral right that cannot be
     assigned or waived; background IP should be carved out explicitly."""
-    basis = "《著作权法》第十条（署名权等人身权不得转让）、第十七条（委托作品默认归受托人）/ PRC Copyright Law, Arts. 10 & 17"
+    basis = (
+        "《著作权法》第十条（署名权等人身权不得转让）、第十七条（委托作品默认归受托人）/ "
+        "PRC Copyright Law, Arts. 10 & 17"
+    )
     waiver_m = _ATTRIBUTION_WAIVER_RE.search(text)
     if waiver_m:
         return StatuteCheck(
