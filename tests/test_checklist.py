@@ -432,3 +432,84 @@ def test_earnest_money_wan_rent_total_derivation():
     check = _checks(text, "lease")["cn_earnest_money_cap"]
     # 12000*12 = 144000, 20% cap 28800 < 40000
     assert check.status == StatuteStatus.VIOLATION
+
+
+def _freelance_checks(text: str):
+    return {c.rule_id: c for c in run_checklist(text, "freelance", "zh")}
+
+
+def test_freelance_stripped_termination_comp_is_violation():
+    check = _freelance_checks("甲方可随时解除本合同，且无需承担任何赔偿责任。")[
+        "cn_freelance_termination_comp"
+    ]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_freelance_termination_with_comp_is_ok():
+    check = _freelance_checks("甲方中途解除本合同的，应赔偿乙方因此遭受的实际损失。")[
+        "cn_freelance_termination_comp"
+    ]
+    assert check.status == StatuteStatus.OK
+
+
+def test_freelance_silent_termination_is_unknown_with_default():
+    check = _freelance_checks("乙方应按期完成开发工作并交付成果。")[
+        "cn_freelance_termination_comp"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "默认" in check.detail
+
+
+def test_freelance_payment_stall_without_deadline_is_flagged():
+    check = _freelance_checks("甲方于项目验收合格后向乙方支付全部报酬。")[
+        "cn_freelance_payment_schedule"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "拖延验收" in check.detail or "合理期限" in check.detail
+
+
+def test_freelance_payment_stall_with_acceptance_deadline_is_ok():
+    text = "甲方于项目验收合格后十五个工作日内支付报酬。甲方应在收到交付物后十个工作日内完成验收。"
+    check = _freelance_checks(text)["cn_freelance_payment_schedule"]
+    assert check.status == StatuteStatus.OK
+
+
+def test_freelance_no_payment_schedule_is_unknown_with_default():
+    check = _freelance_checks("本项目报酬共计人民币壹拾贰万元整。")[
+        "cn_freelance_payment_schedule"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "交付" in check.detail
+
+
+def test_freelance_attribution_waiver_is_violation():
+    check = _freelance_checks("本项目全部成果归甲方所有，乙方承诺不署名、不主张署名权。")[
+        "cn_freelance_ip_scope"
+    ]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_freelance_background_ip_sweep_is_flagged():
+    check = _freelance_checks("本项目成果（含乙方既有的组件与背景知识产权）均归甲方所有。")[
+        "cn_freelance_ip_scope"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "背景" in check.detail or "从严" in check.detail
+
+
+def test_freelance_clean_assignment_is_ok():
+    check = _freelance_checks("本项目新开发成果的知识产权归甲方所有。")[
+        "cn_freelance_ip_scope"
+    ]
+    assert check.status == StatuteStatus.OK
+
+
+def test_freelance_silent_ip_is_unknown_with_creator_default():
+    check = _freelance_checks("乙方按需求说明书完成系统开发。")["cn_freelance_ip_scope"]
+    assert check.status == StatuteStatus.UNKNOWN
+    assert "受托人" in check.detail
+
+
+def test_freelance_rules_do_not_fire_on_loan_text():
+    checks = run_checklist("借款 100000 元，年利率 10%。", "loan", "zh")
+    assert "cn_freelance_termination_comp" not in {c.rule_id for c in checks}

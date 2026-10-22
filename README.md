@@ -159,7 +159,7 @@ ContractGuard automatically detects the contract type and tailors its analysis a
 | **Residential Leases** | Rent increases, deposit refundability, maintenance obligations, landlord access rights, early termination penalties, habitability guarantees |
 | **NDAs / Confidentiality** | Scope of "confidential information" (too broad?), duration, non-solicitation, non-compete, carve-outs for prior knowledge, return/destruction of materials |
 | **Employment Contracts** | Non-compete scope & duration, IP assignment (does employer own your side projects?), termination notice period, severance, at-will vs. for-cause, benefits |
-| **Freelance / Contractor** | Payment terms & schedule, kill fees, IP ownership, indemnification, scope creep protections, late payment penalties |
+| **Freelance / Contractor** | Statutory compensation on mid-project cancellation, payment deadlines (including acceptance-stall traps), IP attribution & background-IP scope |
 | **SaaS Terms of Service** | Data ownership & portability, auto-renewal & cancellation, SLA guarantees, limitation of liability, unilateral modification rights |
 | **Loan Agreements** | Interest rate cap (4x 1-year LPR, floating), pre-deducted interest ("砍头息"), overdue-rate cap, delivery evidence |
 | **Purchase Agreements** | Warranty terms, return/refund policy, liability limits, dispute resolution (arbitration vs. court), force majeure |
@@ -221,7 +221,7 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 **Planned:**
 
-- **More template families** — the templates in `templates/` (loan and NDA starters with machine-checked watch lists) grow alongside the deterministic rule families; freelance and SaaS starters are next.
+- **SaaS terms template** — `templates/` now covers loan, NDA, and freelance/contracting starters, each with a machine-checked watch list; a SaaS terms-of-service starter is the next family to grow alongside its deterministic rules.
 
 ## Related Projects
 

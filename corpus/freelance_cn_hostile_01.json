@@ -1,0 +1,11 @@
+{
+  "contract_type": "freelance",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "承揽人敌对样本：随时解除且明示不赔偿、验收合格才付款且无验收期限、背景知识产权打包归甲方还放弃署名权——一档违规两档亮灯",
+  "expect": {
+    "cn_freelance_termination_comp": "VIOLATION",
+    "cn_freelance_payment_schedule": "UNKNOWN",
+    "cn_freelance_ip_scope": "VIOLATION"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "contract_type": "freelance",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "承揽人清洁样本：中途解除照价赔偿、验收 10 日+付款 15 工作日、新成果归甲方但背景 IP 豁免并保留署名——三档全合规",
+  "expect": {
+    "cn_freelance_termination_comp": "OK",
+    "cn_freelance_payment_schedule": "OK",
+    "cn_freelance_ip_scope": "OK"
+  }
+}

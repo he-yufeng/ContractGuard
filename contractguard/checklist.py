@@ -864,10 +864,182 @@ _LOAN_RULES = [
 ]
 
 _LEASE_RULES = [check_earnest_money, check_lease_term]
+
+
+# --- freelance / 承揽（委托开发、外包）rules --------------------------------
+
+_TERMINATION_STRIP_RE = re.compile(
+    r"可随时解除.{0,20}?(?:无需|无须|不需|不承担|不负).{0,10}?(?:赔偿|补偿|违约责任|责任)|"
+    r"解除.{0,10}?(?:无需|无须|不需|不承担|不负).{0,10}?(?:赔偿|补偿|违约责任)"
+)
+_TERMINATION_COMP_OK_RE = re.compile(
+    r"解除.{0,20}?(?:赔偿|补偿).{0,16}损失|赔偿.{0,16}(?:损失|费用)"
+)
+
+
+def check_freelance_termination_comp(text: str, lang: str) -> StatuteCheck:
+    """The commissioning party may cancel mid-project, but must compensate the
+    contractor's losses (Civil Code art. 787). A clause stripping that duty is
+    the classic freelance trap; the duty still applies by default."""
+    basis = "《民法典》第七百八十七条（定作人中途解除应赔偿承揽人损失）/ PRC Civil Code, Art. 787"
+    bad_m = _TERMINATION_STRIP_RE.search(text)
+    if bad_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_termination_comp",
+            title="中途解除的补偿义务 / Compensation on mid-project cancellation",
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail="条款允许定作人随时解除合同且明示不承担赔偿/补偿责任；该补偿义务是法定的，"
+            "即使条款照写也不能真正免除，但会显著增加争议成本，应当删改 / "
+            "The clause lets the client cancel at will while disclaiming compensation; "
+            "the statutory duty applies anyway, but litigating it is expensive. Strike it.",
+            quote=_excerpt(text, bad_m.group(0)),
+        )
+    ok_m = _TERMINATION_COMP_OK_RE.search(text)
+    if ok_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_termination_comp",
+            title="中途解除的补偿义务 / Compensation on mid-project cancellation",
+            basis=basis,
+            status=StatuteStatus.OK,
+            detail="解除条款带损失赔偿/补偿安排 / The termination clause carries a compensation arrangement.",
+            quote=_excerpt(text, ok_m.group(0)),
+        )
+    return StatuteCheck(
+        rule_id="cn_freelance_termination_comp",
+        title="中途解除的补偿义务 / Compensation on mid-project cancellation",
+        basis=basis,
+        status=StatuteStatus.UNKNOWN,
+        detail="未见解除条款；未约定时定作人中途解除仍应赔偿承揽人损失（法定默认）/ "
+        "No termination clause found; the statutory compensation duty applies by default.",
+    )
+
+
+_PAYMENT_STALL_RE = re.compile(
+    r"(?:验收|验收合格)后.{0,12}?(?:支付|付款|结算)|(?:支付|付款).{0,12}?验收合格"
+)
+_ACCEPTANCE_DEADLINE_RE = re.compile(
+    r"验收.{0,8}?(?:期限|天内|日内|个工作日|内完成)|(?:收到|交付).{0,12}?(?:天内|日内|个工作日).{0,8}?验收"
+)
+_PAYMENT_SCHEDULE_RE = re.compile(
+    r"(?:日内|天内|个工作日|日前).{0,10}?(?:支付|付款|结算)|(?:支付|付款|结算).{0,10}?(?:日内|天内|个工作日|日前)"
+)
+
+
+def check_freelance_payment_schedule(text: str, lang: str) -> StatuteCheck:
+    """Without an agreed payment schedule the price falls due on delivery
+    (Civil Code art. 782). 'Pay after acceptance' with no acceptance deadline
+    is the other classic trap: the client can stall acceptance forever."""
+    basis = "《民法典》第七百八十二条（报酬支付期限，无约定则交付时支付）/ PRC Civil Code, Art. 782"
+    stall_m = _PAYMENT_STALL_RE.search(text)
+    if stall_m and not _ACCEPTANCE_DEADLINE_RE.search(text):
+        return StatuteCheck(
+            rule_id="cn_freelance_payment_schedule",
+            title="报酬支付期限 / Payment schedule",
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="约定验收合格后付款但未给验收期限：定作人可借拖延验收无限期压款；"
+            "法律上会按合理期限/催告处理，但应直接在合同里写死验收天数 / "
+            "Payment is gated on acceptance with no acceptance deadline, so the client "
+            "can stall forever; courts imply a reasonable period, but write the days in.",
+            quote=_excerpt(text, stall_m.group(0)),
+        )
+    sched_m = _PAYMENT_SCHEDULE_RE.search(text)
+    if sched_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_payment_schedule",
+            title="报酬支付期限 / Payment schedule",
+            basis=basis,
+            status=StatuteStatus.OK,
+            detail="付款带明确期限 / The payment terms carry an explicit deadline.",
+            quote=_excerpt(text, sched_m.group(0)),
+        )
+    return StatuteCheck(
+        rule_id="cn_freelance_payment_schedule",
+        title="报酬支付期限 / Payment schedule",
+        basis=basis,
+        status=StatuteStatus.UNKNOWN,
+        detail="未见付款期限；未约定时定作人应在承揽人交付工作成果时支付（法定默认）/ "
+        "No payment deadline found; payment falls due on delivery by default.",
+    )
+
+
+_ATTRIBUTION_WAIVER_RE = re.compile(
+    r"放弃署名权|不署名|不得署名|不享有署名权|署名权归"
+)
+_IP_ASSIGN_RE = re.compile(
+    r"(?:知识产权|著作权).{0,16}归(?:甲方|委托方|定作人)|(?:知识产权|著作权).{0,8}由(?:甲方|委托方)享有"
+)
+_BACKGROUND_SWEEP_RE = re.compile(
+    r"(?:已有的|既有的|背景的|先前的|原有的).{0,12}(?:知识产权|成果|作品).{0,12}归(?:甲方|委托方)|"
+    r"归(?:甲方|委托方).{0,16}(?:已有的|既有的|背景的|先前的).{0,12}(?:知识产权|成果|作品)"
+)
+
+
+def check_freelance_ip_scope(text: str, lang: str) -> StatuteCheck:
+    """Commissioned-work copyright defaults to the contractor (Copyright Law
+    art. 17). Attribution right (署名权) is a moral right that cannot be
+    assigned or waived; background IP should be carved out explicitly."""
+    basis = "《著作权法》第十条（署名权等人身权不得转让）、第十七条（委托作品默认归受托人）/ PRC Copyright Law, Arts. 10 & 17"
+    waiver_m = _ATTRIBUTION_WAIVER_RE.search(text)
+    if waiver_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_ip_scope",
+            title="署名权与知识产权归属 / Attribution and IP ownership",
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail="条款要求承揽人放弃署名权或不署名：署名权是著作人身权，依法不得转让或放弃，"
+            "该约定无效且不应签署 / The clause waives the attribution right, which is a "
+            "moral right that cannot be assigned or waived. Unenforceable; do not sign as-is.",
+            quote=_excerpt(text, waiver_m.group(0)),
+        )
+    sweep_m = _BACKGROUND_SWEEP_RE.search(text)
+    if sweep_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_ip_scope",
+            title="署名权与知识产权归属 / Attribution and IP ownership",
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="条款把承揽人已有/背景知识产权一并划给甲方：委托作品的归属约定有效，"
+            "但已有成果的概括让渡法院会从严解释，建议改为列举式并保留通用工具与技能积累 / "
+            "The clause sweeps the contractor's pre-existing/background IP to the client; "
+            "courts read blanket background assignments narrowly. Enumerate instead, and "
+            "carve out general-purpose tools and know-how.",
+            quote=_excerpt(text, sweep_m.group(0)),
+        )
+    assign_m = _IP_ASSIGN_RE.search(text)
+    if assign_m:
+        return StatuteCheck(
+            rule_id="cn_freelance_ip_scope",
+            title="署名权与知识产权归属 / Attribution and IP ownership",
+            basis=basis,
+            status=StatuteStatus.OK,
+            detail="委托作品知识产权明确归甲方（合法有效）；建议另行豁免背景知识产权与通用工具 / "
+            "Commissioned-work IP is explicitly assigned to the client (valid); a "
+            "background-IP carve-out is still recommended.",
+            quote=_excerpt(text, assign_m.group(0)),
+        )
+    return StatuteCheck(
+        rule_id="cn_freelance_ip_scope",
+        title="署名权与知识产权归属 / Attribution and IP ownership",
+        basis=basis,
+        status=StatuteStatus.UNKNOWN,
+        detail="未见知识产权条款；未约定时委托作品著作权属于受托人（法定默认，对承揽人有利）/ "
+        "No IP clause found; commissioned-work copyright belongs to the contractor by default.",
+    )
+
+
+_FREELANCE_RULES = [
+    check_freelance_termination_comp,
+    check_freelance_payment_schedule,
+    check_freelance_ip_scope,
+]
+
 _CA_LEASE_RULES = us_ca.RULES
 
 _EMPLOYMENT_HINTS = ("劳动", "聘用", "雇佣", "employ", "probation", "试用期")
 _LEASE_HINTS = ("租赁", "出租", "承租", "lease", "rent", "tenan")
+_FREELANCE_HINTS = ("承揽", "委托开发", "外包", "freelance", "居间服务")
 
 # Anchors strong enough to pin a contract to California: governing law, a
 # statute citation, or a California mailing address for the premises.
@@ -937,6 +1109,9 @@ def run_checklist(
     loan = contract_type == "loan" or (
         contract_type == "unknown" and any(h in text_l or h in contract_text for h in _LOAN_HINTS)
     )
+    freelance = contract_type == "freelance" or (
+        contract_type == "unknown" and any(h in text_l or h in contract_text for h in _FREELANCE_HINTS)
+    )
     checks: list[StatuteCheck] = []
     if resolved in ("cn", "unknown"):
         if employment:
@@ -945,6 +1120,8 @@ def run_checklist(
             checks.extend(rule(contract_text, lang) for rule in _LEASE_RULES)
         if loan:
             checks.extend(rule(contract_text, lang) for rule in _LOAN_RULES)
+        if freelance:
+            checks.extend(rule(contract_text, lang) for rule in _FREELANCE_RULES)
     elif lease:
         checks.extend(rule(contract_text, lang) for rule in _CA_LEASE_RULES)
     if jurisdiction == "auto" and resolved == "unknown":
