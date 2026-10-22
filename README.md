@@ -144,7 +144,7 @@ for flag in result.red_flags:
 
 | Format | Extension | Notes |
 |--------|-----------|-------|
-| PDF | `.pdf` | Text-based PDFs. Scanned/image-based PDFs require OCR (coming soon). |
+| PDF | `.pdf` | Text-based PDFs directly; scanned/image-only PDFs go through OCR (see below). |
 | Word | `.docx` | Microsoft Word documents |
 | Plain Text | `.txt` | Plain text files |
 | Markdown | `.md` | Markdown files |
@@ -217,11 +217,10 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel. Reports export to a clean PDF — statute citations with official links and risk levels included — via `--output report.pdf` or the web download button; weasyprint renders when its system libraries exist, and the bundled pure-python fallback covers hosts where they do not. A release corpus (`corpus/`, gated by `tests/test_corpus.py`) pins checklist verdicts on full-length sample contracts, so rule and parser changes cannot quietly alter real outcomes.
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel. Reports export to a clean PDF — statute citations with official links and risk levels included — via `--output report.pdf` or the web download button; weasyprint renders when its system libraries exist, and the bundled pure-python fallback covers hosts where they do not. Scanned/image-only PDFs go through OCR (`pip install "contractguardian[ocr]"` plus the Tesseract engine — `brew install tesseract tesseract-lang` on macOS, `apt install tesseract-ocr tesseract-ocr-chi-sim` on Debian/Ubuntu; Chinese and English are both read when the language pack is present). A release corpus (`corpus/`, gated by `tests/test_corpus.py`) pins checklist verdicts on full-length sample contracts, so rule and parser changes cannot quietly alter real outcomes.
 
 **Planned:**
 
-- **OCR for scanned PDFs** — handle image-only contracts, not just text PDFs, which is where a lot of real paperwork actually lives.
 - **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
 
 ## Related Projects

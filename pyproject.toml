@@ -37,7 +37,7 @@ dependencies = [
 [project.optional-dependencies]
 web = ["gradio>=4.0"]
 pdf = ["weasyprint>=62.0"]
-ocr = ["pytesseract>=0.3"]
+ocr = ["pytesseract>=0.3", "pypdfium2>=4.30"]
 dev = ["pytest>=7.0", "pytest-asyncio>=0.21", "ruff>=0.4"]
 
 [project.scripts]

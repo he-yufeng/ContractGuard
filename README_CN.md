@@ -141,7 +141,7 @@ for flag in result.red_flags:
 
 | 格式 | 扩展名 | 说明 |
 |------|--------|------|
-| PDF | `.pdf` | 文字型 PDF。扫描件/图片型 PDF 需要 OCR（即将支持） |
+| PDF | `.pdf` | 文字型 PDF 直接读；扫描件/图片型 PDF 走 OCR（见下） |
 | Word | `.docx` | Microsoft Word 文档 |
 | 纯文本 | `.txt` | 纯文本文件 |
 | Markdown | `.md` | Markdown 文件 |
@@ -214,11 +214,10 @@ ContractGuard 使用 OpenAI 兼容 API 格式，几乎支持所有 LLM 服务商
 
 ## 路线图
 
-**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`，LLM 分析和确定性法条核查面板同屏展示）。报告可导出排版干净的 PDF（含法条引用、官方链接和风险等级）：`--output report.pdf` 或 Web 端下载按钮；装了 weasyprint 系统库就走高保真渲染，没装也有内置纯 Python 渲染器兜底，任何机器都能导出。发版回归语料集（`corpus/`，由 `tests/test_corpus.py` 把门）在全长样本合同上钉死法条核查判定，规则和解析器改动不再能悄悄改变真实结果。
+**已完成**：批量扫描（一次分析多份合同）、合同对比（diff 两个版本并逐条标出变化）、逐条协商意见稿（每个风险点可附带建议替换措辞，能直接粘进协商邮件）、法域感知的确定性法条核查（中国劳动法与《民法典》，外加美国加州住宅租赁规则，目前覆盖一个州）、Gradio Web 界面（`contractguard web`，LLM 分析和确定性法条核查面板同屏展示）。报告可导出排版干净的 PDF（含法条引用、官方链接和风险等级）：`--output report.pdf` 或 Web 端下载按钮；装了 weasyprint 系统库就走高保真渲染，没装也有内置纯 Python 渲染器兜底，任何机器都能导出。扫描件/图片型 PDF 走 OCR 识别（`pip install "contractguardian[ocr]"`，另需 Tesseract 引擎：macOS 用 `brew install tesseract tesseract-lang`，Debian/Ubuntu 用 `apt install tesseract-ocr tesseract-ocr-chi-sim`；装了中文语言包就中英都读）。发版回归语料集（`corpus/`，由 `tests/test_corpus.py` 把门）在全长样本合同上钉死法条核查判定，规则和解析器改动不再能悄悄改变真实结果。
 
 **规划中**：
 
-- **扫描件 PDF 的 OCR 支持**：处理只有图像的合同，而不只是文本 PDF——大量真实纸面合同就是这种。
 - **常见合同模板**：几类常见合同 + 已知风险点，既当起点也当测试语料。
 
 ## 相关项目
