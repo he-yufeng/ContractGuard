@@ -790,7 +790,10 @@ def check_loan_overdue_rate_cap(text: str, lang: str) -> StatuteCheck:
     """The overdue (default) interest rate is enforceable only up to the same
     4x 1-year LPR cap as the loan rate itself (SPC private-lending
     interpretation, Art. 28)."""
-    basis = "最高法民间借贷司法解释第二十八条（逾期利率同样以一年期 LPR 四倍为限）/ SPC private-lending interpretation, Art. 28"
+    basis = (
+        "最高法民间借贷司法解释第二十八条（逾期利率同样以一年期 LPR 四倍为限）/ "
+        "SPC private-lending interpretation, Art. 28"
+    )
     parsed = _overdue_annualized_rate(text)
     if not parsed:
         return StatuteCheck(
