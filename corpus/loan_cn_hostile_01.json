@@ -1,0 +1,11 @@
+{
+  "contract_type": "loan",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "借款人敌对样本：本金预扣首年利息（砍头息）、借期年利率24%、逾期年利率36%另加五万违约金——三档全违规",
+  "expect": {
+    "cn_loan_interest_cap": "VIOLATION",
+    "cn_loan_no_prededucted_interest": "VIOLATION",
+    "cn_loan_overdue_rate_cap": "VIOLATION"
+  }
+}

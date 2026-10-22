@@ -1,0 +1,11 @@
+{
+  "contract_type": "loan",
+  "lang": "zh",
+  "jurisdiction": "cn",
+  "note": "借款人清洁样本：本金全额转账交付且明示不预扣、借期年利率10%、逾期年利率8%——三档全合规",
+  "expect": {
+    "cn_loan_interest_cap": "OK",
+    "cn_loan_no_prededucted_interest": "OK",
+    "cn_loan_overdue_rate_cap": "OK"
+  }
+}

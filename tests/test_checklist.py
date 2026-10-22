@@ -364,6 +364,42 @@ def test_loan_rules_do_not_fire_on_employment_text():
     assert "cn_loan_interest_cap" not in {c.rule_id for c in checks}
 
 
+def test_loan_overdue_annual_rate_over_cap_is_violation():
+    check = _loan_checks("借款 100000 元，年利率 10%，逾期年利率 36%。")[
+        "cn_loan_overdue_rate_cap"
+    ]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_overdue_rate_within_cap_is_ok():
+    check = _loan_checks("借款 100000 元，年利率 10%，逾期年利率 8%。")[
+        "cn_loan_overdue_rate_cap"
+    ]
+    assert check.status == StatuteStatus.OK
+
+
+def test_loan_overdue_monthly_rate_is_annualized():
+    # 逾期月息 1.5% = 18%/year, over the ~12% cap
+    check = _loan_checks("借款 50000 元，逾期利息按月息 1.5% 计收。")[
+        "cn_loan_overdue_rate_cap"
+    ]
+    assert check.status == StatuteStatus.VIOLATION
+
+
+def test_loan_overdue_rule_reads_the_overdue_clause_not_the_loan_rate():
+    # loan rate is fine; the overdue clause is what must be judged
+    checks = _loan_checks("借款 100000 元，年利率 10%，逾期年利率 30%。")
+    assert checks["cn_loan_interest_cap"].status == StatuteStatus.OK
+    assert checks["cn_loan_overdue_rate_cap"].status == StatuteStatus.VIOLATION
+
+
+def test_loan_no_overdue_clause_is_unknown():
+    check = _loan_checks("借款 100000 元，年利率 10%，借期一年。")[
+        "cn_loan_overdue_rate_cap"
+    ]
+    assert check.status == StatuteStatus.UNKNOWN
+
+
 def test_noncompete_severance_compensation_does_not_count():
     # LCL 46/47 severance wording in a separate sentence must not satisfy the
     # non-compete compensation requirement — it used to report OK.

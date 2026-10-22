@@ -786,7 +786,79 @@ def check_loan_prededucted_interest(text: str, lang: str) -> StatuteCheck:
     )
 
 
-_LOAN_RULES = [check_loan_interest_cap, check_loan_prededucted_interest]
+def check_loan_overdue_rate_cap(text: str, lang: str) -> StatuteCheck:
+    """The overdue (default) interest rate is enforceable only up to the same
+    4x 1-year LPR cap as the loan rate itself (SPC private-lending
+    interpretation, Art. 28)."""
+    basis = "最高法民间借贷司法解释第二十八条（逾期利率同样以一年期 LPR 四倍为限）/ SPC private-lending interpretation, Art. 28"
+    parsed = _overdue_annualized_rate(text)
+    if not parsed:
+        return StatuteCheck(
+            rule_id="cn_loan_overdue_rate_cap",
+            title="逾期利率上限 / Overdue-interest rate cap",
+            basis=basis,
+            status=StatuteStatus.UNKNOWN,
+            detail="未发现可解析的逾期利率条款 / No parseable overdue-rate clause found.",
+        )
+    rate, needle = parsed
+    cap = _LOAN_RATE_CAP
+    if rate > cap:
+        return StatuteCheck(
+            rule_id="cn_loan_overdue_rate_cap",
+            title="逾期利率上限 / Overdue-interest rate cap",
+            basis=basis,
+            status=StatuteStatus.VIOLATION,
+            detail=f"逾期利率年化约 {rate:.2f}%，超出司法保护上限（约 {cap:.1f}%，随 LPR 浮动），"
+            f"超出部分法院不予保护 / The overdue rate annualizes to about {rate:.2f}%, above "
+            f"the enforceable cap (about {cap:.1f}%, floating with the LPR). "
+            "The excess is unenforceable.",
+            quote=_excerpt(text, needle),
+        )
+    return StatuteCheck(
+        rule_id="cn_loan_overdue_rate_cap",
+        title="逾期利率上限 / Overdue-interest rate cap",
+        basis=basis,
+        status=StatuteStatus.OK,
+        detail=f"逾期利率年化约 {rate:.2f}%，未超司法保护上限（约 {cap:.1f}%，随 LPR 浮动）/ "
+        f"The overdue rate annualizes to about {rate:.2f}%, within the enforceable cap "
+        f"(about {cap:.1f}%, floating with the LPR).",
+        quote=_excerpt(text, needle),
+    )
+
+
+def _overdue_annualized_rate(text: str) -> tuple[float, str] | None:
+    """Parse the *overdue* rate and annualize it.
+
+    Looks for the rate keyword carrying a 逾期/违约 marker: 逾期年利率 X%,
+    逾期利息按月息 X% 计, 逾期违约金年化 X%. Returns (annual_percent,
+    matched_text) or None when no overdue clause parses.
+    """
+    m = re.search(
+        r"(?:逾期|违约)[^。；;]{0,12}?(?:年利率|年化利率|年息|年化)[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*%",
+        text,
+    )
+    if m:
+        return float(m.group(1)), m.group(0)
+    m = re.search(
+        r"(?:逾期|违约)[^。；;]{0,12}?(?:月利率|月息)[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*%",
+        text,
+    )
+    if m:
+        return float(m.group(1)) * 12, m.group(0)
+    m = re.search(
+        r"(?:年利率|年化利率|年息|年化)[^。；;]{0,12}?逾期[^。；;]{0,8}?([0-9]+(?:\.[0-9]+)?)\s*%",
+        text,
+    )
+    if m:
+        return float(m.group(1)), m.group(0)
+    return None
+
+
+_LOAN_RULES = [
+    check_loan_interest_cap,
+    check_loan_prededucted_interest,
+    check_loan_overdue_rate_cap,
+]
 
 _LEASE_RULES = [check_earnest_money, check_lease_term]
 _CA_LEASE_RULES = us_ca.RULES

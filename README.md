@@ -161,7 +161,7 @@ ContractGuard automatically detects the contract type and tailors its analysis a
 | **Employment Contracts** | Non-compete scope & duration, IP assignment (does employer own your side projects?), termination notice period, severance, at-will vs. for-cause, benefits |
 | **Freelance / Contractor** | Payment terms & schedule, kill fees, IP ownership, indemnification, scope creep protections, late payment penalties |
 | **SaaS Terms of Service** | Data ownership & portability, auto-renewal & cancellation, SLA guarantees, limitation of liability, unilateral modification rights |
-| **Loan Agreements** | Interest rate (fixed vs. variable), prepayment penalties, default triggers, personal guarantee scope, collateral requirements |
+| **Loan Agreements** | Interest rate cap (4x 1-year LPR, floating), pre-deducted interest ("砍头息"), overdue-rate cap, delivery evidence |
 | **Purchase Agreements** | Warranty terms, return/refund policy, liability limits, dispute resolution (arbitration vs. court), force majeure |
 
 ## How It Works
@@ -217,11 +217,11 @@ Yes. `--json` gives parseable output; exit code is 0 on success, 1 on error. E.g
 
 ## Roadmap
 
-**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel. Reports export to a clean PDF — statute citations with official links and risk levels included — via `--output report.pdf` or the web download button; weasyprint renders when its system libraries exist, and the bundled pure-python fallback covers hosts where they do not. Scanned/image-only PDFs go through OCR (`pip install "contractguardian[ocr]"` plus the Tesseract engine — `brew install tesseract tesseract-lang` on macOS, `apt install tesseract-ocr tesseract-ocr-chi-sim` on Debian/Ubuntu; Chinese and English are both read when the language pack is present). A release corpus (`corpus/`, gated by `tests/test_corpus.py`) pins checklist verdicts on full-length sample contracts, so rule and parser changes cannot quietly alter real outcomes.
+**Shipped:** batch scanning (analyze many contracts in one run), contract comparison (diff two versions and surface what changed, clause by clause), clause-level negotiation drafts (each red flag can carry suggested replacement wording, ready to paste into a negotiation email), jurisdiction-aware statute checks (PRC labor and civil law, plus California residential leases; one US state so far), and a Gradio web UI (`contractguard web`) that shows the LLM analysis alongside the deterministic statute-check panel. Reports export to a clean PDF — statute citations with official links and risk levels included — via `--output report.pdf` or the web download button; weasyprint renders when its system libraries exist, and the bundled pure-python fallback covers hosts where they do not. Scanned/image-only PDFs go through OCR (`pip install "contractguardian[ocr]"` plus the Tesseract engine — `brew install tesseract tesseract-lang` on macOS, `apt install tesseract-ocr tesseract-ocr-chi-sim` on Debian/Ubuntu; Chinese and English are both read when the language pack is present). Pre-built templates live in `templates/` — loan and NDA starters with inline usage notes and watch lists of the same red flags the scanner checks. A release corpus (`corpus/`, gated by `tests/test_corpus.py`) pins checklist verdicts on full-length sample contracts, so rule and parser changes cannot quietly alter real outcomes.
 
 **Planned:**
 
-- **Pre-built contract templates** — a few common contract types with known red flags, useful both as a starting point and as a test corpus.
+- **More template families** — the templates in `templates/` (loan and NDA starters with machine-checked watch lists) grow alongside the deterministic rule families; freelance and SaaS starters are next.
 
 ## Related Projects
 
